@@ -263,7 +263,7 @@ int16_t Hdlc_Check(uint8_t *buf,uint16_t len)
 		{
 			if(buf[i+frame_len+1]==0x7e)
 			{
-#if 0
+#if 1
 				i_crc=DoCrc16(0xffff,buf+i+1,frame_len-2);
 				if(i_crc == (buf[frame_len+i-1] | (buf[frame_len+i]<<8)))
 				{	
@@ -303,6 +303,16 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 	ptr=0;
 	buf[ptr++]=0x7e;
 	ptr +=2;
+	if(Len)
+	{
+		buf[1] = 0xA0 | (((Len+11))>>8)&0x3f;
+		buf[2]=(((Len+11)))&0xff;
+	}
+	else
+	{
+		buf[1] = 0xA0 | (((Len+9))>>8)&0x3f;
+		buf[2]=(((Len+9)))&0xff;
+	}
 	buf[ptr++]= 2;
 	buf[ptr++]=(i_Meter_Prot<<1)|0x1;
 	buf[ptr++]=(i_Meter_Addr<<1)&0xFE;
@@ -313,8 +323,8 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 			{
 				rxseq = (b_seq>>5)&0x7;
 				txseq = (b_seq>>1)&0x7;
-				rxseq++;
-				rxseq%=8;
+			//	rxseq++;
+				//rxseq%=8;
 				/*txseq++;
 				txseq%=8;*/
 				b_seq = (rxseq<<5)|(txseq<<1);
@@ -368,14 +378,14 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 			}
 			else
 			{
-				if(oldControlByte==HDLC_UI)
-					return 0;
+			//	if(oldControlByte==HDLC_UI)
+				//	return 0;
 				if(oldControlByte==HDLC_RR)
 					buf[ptr++]=HDLC_UA;
 				else
 				//b_seq = (b_seq&0xf0)| ((b_Hdlc_buf[7]>>4)&0xe);
-				//buf[ptr++]=HDLC_RR|((b_seq+0x20)&0xf0);
-				buf[ptr++]=HDLC_RR|((b_seq)&0xf0);
+				buf[ptr++]=HDLC_RR|((b_seq+0x20)&0xf0);
+				//buf[ptr++]=HDLC_RR|((b_seq)&0xf0);
 				//buf[ptr++]=HDLC_I|(b_seq);
 			}
 
@@ -414,7 +424,8 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 	//		}
 			break;
 		case HDLC_RNR:
-			buf[ptr++]=HDLC_RNR|((b_seq+0x20)&0xf0);
+			//buf[ptr++]=HDLC_RNR|((b_seq+0x20)&0xf0);
+			buf[ptr++]=HDLC_RNR|(b_seq&0xf0);
 			break;
 		case HDLC_SNRM:
 			b_seq=0x10;
@@ -444,16 +455,20 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 	i_crc = DoCrc16(0xffff,buf+1,ptr-1);
 	buf[ptr++] = i_crc&0xff;
 	buf[ptr++] = (i_crc>>8)&0xff;
-	if(Len>0)
+	if(Len)
 	{
 		ptr += Len;
 		i_crc = DoCrc16(0xffff,buf+1,ptr-1);
 		buf[ptr++] = i_crc&0xff;
 		buf[ptr++] = (i_crc>>8)&0xff;
 	}
+	/*
 	buf[1] = 0xA0 | (((ptr-1))>>8)&0x3f;
-	buf[2]=(ptr-1)&0xff;
+	buf[2]=(ptr-1)&0xff;*/
 	buf[ptr++]=0x7E;
+	buf[ptr+1]=0x7e;
+	buf[ptr+2]=0x7e;
+	buf[ptr+3]=0x7e;
 	return ptr;
 }
 
@@ -473,10 +488,10 @@ void CM_HDLC_Receive(void)
 		hdlc_back=0;
 	}
 #endif
-	if(res_count&&ms_count<100)
+/*	if(res_count&&ms_count<100)
 	{
 		return;
-	}
+	}*/
 	//test end
 	i_rx_length=1024-i_rx_len;
 	if(i_rx_length>1024)
@@ -587,7 +602,7 @@ void CM_HDLC_Receive(void)
 								i_send_len=hdlc_back();
 								hdlc_back=0;
 								res_count=1;
-								b_seq = b_seq-0x20;
+							//	b_seq = b_seq-0x20;
 							}
 						}
 						if(ControlByte==HDLC_RR  && i_send_len)
@@ -599,20 +614,28 @@ void CM_HDLC_Receive(void)
 							//ms_count=0;
 							ControlByte=HDLC_I;
 							b_seq = (b_seq&0xf0)| ((b_Hdlc_buf[7]>>4)&0xe);
-#if 1							
+#if 0							
 							if(res_count)
 							{
 								ui_flag=0;
-								seqbak=b_seq;
-							//	b_seq = b_seq-0x20;
-								i_send_length=HDLC_Assemble(b_Hdlc_sendbuf,i_send_len);
+								/*seqbak=b_seq;
+								ControlByte=HDLC_RNR;
+								i_send_length=HDLC_Assemble(b_short_frame,0);
+								Serial_Write(b_short_frame,i_send_length);
 								b_seq=seqbak;
+								ControlByte=HDLC_I;
 								Serial_Read(b_Hdlc_buf,256);
+								res_count=0;
+								ms_count=0;
+								return;*/
+								i_send_length=HDLC_Assemble(b_Hdlc_sendbuf,i_send_len);
+								
 							}
 							else
 #endif								
 							{
 								//mdelay(1);
+								ControlByte=HDLC_I;
 								i_send_length=HDLC_Assemble(b_Hdlc_sendbuf,i_send_len);
 								ControlByte=HDLC_RR;
 							//	i_send_len=0;
@@ -622,9 +645,18 @@ void CM_HDLC_Receive(void)
 						}
 						else
 							i_send_length=HDLC_Assemble(b_Hdlc_sendbuf,0);
+#define HDLC_HEAD_LEN       1						
 						if(i_send_length)
 						{
-							Serial_Write(b_Hdlc_sendbuf,i_send_length);
+						/*	if(i_send_length>16)
+							{
+								Serial_Write(b_Hdlc_sendbuf,HDLC_HEAD_LEN);
+								//udelay(300);
+								Serial_Write(b_Hdlc_sendbuf+HDLC_HEAD_LEN,i_send_length-HDLC_HEAD_LEN);
+							}
+							else*/
+								Serial_Write(b_Hdlc_sendbuf,i_send_length);
+							i_send_length=0;
 						}
 					}
 		}
@@ -644,6 +676,7 @@ void CM_HDLC_Receive(void)
 				Serial_Write(b_short_frame,11);
 			}*/
 				b_seq = (((b_Hdlc_buf[7]>>5)&7)<<1) | ((((b_Hdlc_buf[7]>>1))&7)<<5);
+			  b_seq +=0x20;
 		//	b_seq = (((((b_seq>>5)&0x7)+1)%8)<<5) | (b_seq&0x1e);
 #if 0		 //TEST delete	
 			ControlByte=HDLC_RNR;
@@ -663,7 +696,7 @@ void CM_HDLC_Receive(void)
 		//		case HDLC_I_PROTOCOL_TLS_NOCONTENT:
 		//			break;
 				case HDLC_I_PROTOCOL_SML_COSEM:
-#if 0 //test					
+#if 1 //test					
 					i_send_length=0;
 					if(i_rx_length)
 					{

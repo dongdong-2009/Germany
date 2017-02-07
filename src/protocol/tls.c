@@ -490,7 +490,7 @@ struct TLSPacket *tls_build_server_key_exchange(struct TLSContext *context, int 
 #endif
 		fnWDT_Restart();
 		mbedtls_sha512(buf,__TLS_CLIENT_RANDOM_SIZE+__TLS_CLIENT_RANDOM_SIZE+packet.len-9,publicK,0);	
-		//Cm_Ram_Inter(publicK,64);
+		Cm_Ram_Inter(publicK,64);
 		fnWDT_Restart();
 		uECC_sign(context->ecc_priv,publicK,64,sign_out,p_curve);
 		//uECC_sign(privateK,publicK,64,sign_out,p_curve);
