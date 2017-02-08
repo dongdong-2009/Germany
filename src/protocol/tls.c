@@ -396,7 +396,8 @@ int tls_parse_hello(struct TLSContext *context, const unsigned char *buf, int bu
 	
   *write_packets = 0;
   *dtls_verified = 0;      	
-	memcpy(context->remote_random,(const void *)buf[res],__TLS_CLIENT_RANDOM_SIZE);
+	//memcpy(context->remote_random,(const void *)buf[res],__TLS_CLIENT_RANDOM_SIZE);
+	memcpy(context->remote_random,(const void *)&buf[res],__TLS_CLIENT_RANDOM_SIZE);
 	res += __TLS_CLIENT_RANDOM_SIZE;
 	session_len = buf[res++];
 	if(session_len)
@@ -490,7 +491,7 @@ struct TLSPacket *tls_build_server_key_exchange(struct TLSContext *context, int 
 #endif
 		fnWDT_Restart();
 		mbedtls_sha512(buf,__TLS_CLIENT_RANDOM_SIZE+__TLS_CLIENT_RANDOM_SIZE+packet.len-9,publicK,0);	
-		Cm_Ram_Inter(publicK,64);
+	//	Cm_Ram_Inter(publicK,64);
 		fnWDT_Restart();
 		uECC_sign(context->ecc_priv,publicK,64,sign_out,p_curve);
 		//uECC_sign(privateK,publicK,64,sign_out,p_curve);
@@ -502,11 +503,11 @@ struct TLSPacket *tls_build_server_key_exchange(struct TLSContext *context, int 
 	tls_packet_uint16(&packet,0x3046);
 	tls_packet_uint16(&packet,0x0221);
 	tls_packet_uint8(&packet,0x00);
-	Cm_Ram_Inter(sign_out,32);
+	//Cm_Ram_Inter(sign_out,32);
 	tls_packet_append(&packet,sign_out, 32);
 	tls_packet_uint16(&packet,0x0221);
 	tls_packet_uint8(&packet,0x00);
-	Cm_Ram_Inter(sign_out+32,32);
+	//Cm_Ram_Inter(sign_out+32,32);
 	tls_packet_append(&packet,sign_out+32, 32);
 	context->message_buffer_len += packet.len;
 	return &packet;

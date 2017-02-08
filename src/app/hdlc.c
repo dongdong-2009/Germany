@@ -428,7 +428,7 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 			buf[ptr++]=HDLC_RNR|(b_seq&0xf0);
 			break;
 		case HDLC_SNRM:
-			b_seq=0x10;
+			b_seq=0xf0;
 			Connected=255;
 			ui_flag=1;
 			buf[ptr++]=HDLC_UA;
@@ -443,7 +443,7 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 		#endif
 			break;
 		case HDLC_DISC:
-			b_seq=0x10;
+			b_seq=0xf0;
 			Connected=0;
 			buf[ptr++]=HDLC_DM;
 			break;
@@ -466,9 +466,6 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 	buf[1] = 0xA0 | (((ptr-1))>>8)&0x3f;
 	buf[2]=(ptr-1)&0xff;*/
 	buf[ptr++]=0x7E;
-	buf[ptr+1]=0x7e;
-	buf[ptr+2]=0x7e;
-	buf[ptr+3]=0x7e;
 	return ptr;
 }
 
@@ -478,9 +475,9 @@ void CM_HDLC_Receive(void)
 	int16_t i;
 	uint16_t i_send_length;
 	uint8_t ClientAddr,LMN_Addr,Proto_Index;
-	uint8_t seqbak;
+//	uint8_t seqbak;
 	//uint8_t ControlByte;
-	uint8_t *send_ptr;
+	//uint8_t *send_ptr;
 #ifdef TEST	
 	if(hdlc_back)
 	{
@@ -607,11 +604,6 @@ void CM_HDLC_Receive(void)
 						}
 						if(ControlByte==HDLC_RR  && i_send_len)
 						{
-							//mdelay(6);
-							//mdelay(res_count);
-						//	mdelay(10);
-							//gprs_ms=300;
-							//ms_count=0;
 							ControlByte=HDLC_I;
 							b_seq = (b_seq&0xf0)| ((b_Hdlc_buf[7]>>4)&0xe);
 #if 0							
@@ -644,18 +636,10 @@ void CM_HDLC_Receive(void)
 							ms_count=0;
 						}
 						else
-							i_send_length=HDLC_Assemble(b_Hdlc_sendbuf,0);
-#define HDLC_HEAD_LEN       1						
+							i_send_length=HDLC_Assemble(b_Hdlc_sendbuf,0);					
 						if(i_send_length)
 						{
-						/*	if(i_send_length>16)
-							{
-								Serial_Write(b_Hdlc_sendbuf,HDLC_HEAD_LEN);
-								//udelay(300);
-								Serial_Write(b_Hdlc_sendbuf+HDLC_HEAD_LEN,i_send_length-HDLC_HEAD_LEN);
-							}
-							else*/
-								Serial_Write(b_Hdlc_sendbuf,i_send_length);
+							Serial_Write(b_Hdlc_sendbuf,i_send_length);
 							i_send_length=0;
 						}
 					}

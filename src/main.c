@@ -481,7 +481,7 @@ int  main ( void )
 	SystemDelay(1000);  // 等待第1次上电的稳定
 	fnWDT_Restart();
 	fnTarget_Init();
-	cacheOff();
+	//cacheOff();
 	//fnLcd_Init();
 	__enable_irq();
 	Serial_Open(921600,8,0);

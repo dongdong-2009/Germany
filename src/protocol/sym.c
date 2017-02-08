@@ -174,8 +174,8 @@ int16_t Sym3(uint8_t *recvbuf,uint8_t *sendbuf,uint16_t len)
 			}
 			E2P_WData( E2P_LMN_Certi,recvbuf+9,len-25);
 		}
-		else
-			return 0;
+	//	else
+		//	return 0;
 		/*wr_len=0;
 		while(len)
 		{
