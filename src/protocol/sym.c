@@ -16,8 +16,10 @@ static uint32_t  Trans_Counter=0x0166;
 uint8_t keytext[16]={0xA4,0x45,0x7D,0x73,0xF3,0xA8,0xED,0x56,0xB7,0x22,0x68,0xD9,0xB5,0x23,0x0F,0x7A};
 extern struct S_Hdlc_LMN_Info m_lmn_info;
 uint8_t Kenc[16],Kmac[16],Lenc[16],Lmac[16];
-static uint8_t b_lmn_cert[512];
-static uint8_t b_gw_cert[256];
+//static uint8_t b_lmn_cert[512];
+//static uint8_t b_gw_cert[256];
+uint8_t b_lmn_cert[512];
+uint8_t b_gw_cert[256];
 uint8_t *Get_LMN_Cert(void)
 {
 	return b_lmn_cert;
@@ -163,7 +165,10 @@ int16_t Sym3(uint8_t *recvbuf,uint8_t *sendbuf,uint16_t len)
 		{
 			ecc_addr=Cm_Get_ECC_Addr();
 			ret=recvbuf[11]<<8 | recvbuf[12];
-			memcpy(b_lmn_cert,recvbuf+9,ret+4);
+		//	memcpy(b_lmn_cert,recvbuf+9,ret+4);
+			if(len>512)
+				len=512;
+			memcpy(b_lmn_cert,recvbuf+9,len);
 			memcpy(ecc_addr,recvbuf+ret+20,32);    //+9+ret+4+7
 			E2P_WData( PublicKey_Y,recvbuf+ret+70,64);
 			for(len=0;len<16;++len)
