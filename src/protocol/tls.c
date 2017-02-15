@@ -359,6 +359,11 @@ uint8_t m_cipher[80]={0xB0,0xDA,0xBC,0x89,0xE6,0x54,0x01,0x11,0xE4,0x75,0xCF,0xE
 0x5A,0xB4,0x58,0x09,0x61,0x71,0x32,0x97,0x29,0x7B,0x41,0xC8,0x66,0x76,0x9B,0xA6,
 0x5A,0x84,0x2C,0x46,0x6B,0xE8,0x1D,0xBD,0x50,0x8A,0x52,0x50,0xD0,0x46,0x15,0x86};
 #endif
+void Cm_Signature(uint8_t *pri,uint8_t *in,uint32_t Len,uint8_t *out)
+{
+	mbedtls_sha256(in,Len,sign_out,0);
+	uECC_sign(pri,sign_out,32,out,p_curve);
+}
 int tls_Init(void)
 {
 	unsigned char *privateK;
@@ -510,6 +515,10 @@ int tls_Init(void)
 		if (1 == uECC_make_key((unsigned char *)publicK,(unsigned char *)privateK,p_curve))
 		{
 		}
+		E2P_WData(E2P_PrivateKey,privateK,32);
+		Cm_Ram_Inter(publicK,32);
+		Cm_Ram_Inter(publicK+32,32);
+		E2P_WData(PublicKey_Y,publicK,32);
 		fnWDT_Restart();
 		m_tlscontext.sha256_init=0;
 #if 0		
@@ -626,28 +635,14 @@ struct TLSPacket *tls_build_server_key_exchange(struct TLSContext *context, int 
 {
 	struct TLSPacket packet;
 	unsigned char *privateK;
- // unsigned char publicK[64];
 	unsigned char *publicK;
-	//struct uECC_HashContext m_hash_context;
 	unsigned char *buf;
 	int i;
- // SHA512_HashContext ctx;
-//	SHA256_HashContext ctx;
-    
 	privateK = context->priv;
 	publicK = context->public_key;
-	//uECC_compute_public_key(privateK,publicK,p_curve);
-/*	method=rand()%256;
-	i=0;
-	if(method<10)
-		method +=10;
-	while(i++<method)
-	{*/
-		if (uECC_make_key((unsigned char *)context->public_key,(unsigned char *)privateK,p_curve))
-		{
-			//break;
-		}
-//	}
+
+	uECC_make_key((unsigned char *)context->public_key,(unsigned char *)privateK,p_curve);
+
 
 	packet.buf = context->message_buffer+context->message_buffer_len;
 	buf = packet.buf+384;
@@ -665,55 +660,19 @@ struct TLSPacket *tls_build_server_key_exchange(struct TLSContext *context, int 
 	fnWDT_Restart();
 	Cm_Ram_Inter(packet.buf+packet.len+1,32);
 	packet.len +=0x21;
-/*	
-	tls_packet_uint8(&packet,sha512);
-	tls_packet_uint8(&packet,ecdsa);*/
-#if 1	
-	memcpy(buf,context->remote_random,__TLS_CLIENT_RANDOM_SIZE);
-//	Cm_Ram_Inter(buf,32);
-	memcpy(buf+__TLS_CLIENT_RANDOM_SIZE,context->local_random, __TLS_SERVER_RANDOM_SIZE);
-	//Cm_Ram_Inter(buf+32,32);
-	memcpy(buf+__TLS_CLIENT_RANDOM_SIZE+__TLS_SERVER_RANDOM_SIZE, packet.buf + 9, packet.len-9);
-#else
-	memcpy(buf,packet.buf + 9, packet.len-9);
-#endif
-#if 0
-#if   0 //def _USE_SHA_512
-	ctx.uECC.init_hash = init_SHA512;
-	ctx.uECC.update_hash = update_SHA512;
-	ctx.uECC.finish_hash = finish_SHA512;
-	ctx.uECC.block_size = 128;
-	ctx.uECC.result_size = 64;
-#else
-	ctx.uECC.init_hash = init_SHA256;
-	ctx.uECC.update_hash = update_SHA256;
-	ctx.uECC.finish_hash = finish_SHA256;
-	ctx.uECC.block_size = 64;
-	ctx.uECC.result_size = 32;
-#endif
-	ctx.uECC.tmp = tmp;
-	fnWDT_Restart();
-	uECC_sign_deterministic(context->ecc_priv, buf,__TLS_CLIENT_RANDOM_SIZE+__TLS_CLIENT_RANDOM_SIZE+packet.len-9,&ctx.uECC, sign_out,p_curve);
-	fnWDT_Restart();
-	//Cm_Ram_Inter(sign_out,32);
-	//Cm_Ram_Inter(sign_out+32,32);
-	
-	//uECC_sign_deterministic(privateK, buf,__TLS_CLIENT_RANDOM_SIZE+__TLS_CLIENT_RANDOM_SIZE+packet.len-9,&ctx.uECC, packet.buf+packet.len+4,p_curve);
-	//uECC_sign(privateK,buf,__TLS_CLIENT_RANDOM_SIZE+__TLS_CLIENT_RANDOM_SIZE+packet.len-9,packet.buf+packet.len+4,p_curve);
-	//mbedtls_sha512( buf, __TLS_CLIENT_RANDOM_SIZE+__TLS_CLIENT_RANDOM_SIZE+packet.len-9, packet.buf+packet.len+4, 0 );
-#endif
-		fnWDT_Restart();
-#if 1		
-		mbedtls_sha512(buf,__TLS_CLIENT_RANDOM_SIZE+__TLS_SERVER_RANDOM_SIZE+packet.len-9,publicK,0);	
-#else
-		mbedtls_sha512(buf,packet.len-9,publicK,0);	
-		fnWDT_Restart();
-#endif
 
-		Cm_Ram_Inter(publicK,32);
-		Cm_Ram_Inter(publicK+32,32);
-		fnWDT_Restart();
-		uECC_sign(context->ecc_priv,publicK,64,sign_out,p_curve);
+	
+	memcpy(buf,context->remote_random,__TLS_CLIENT_RANDOM_SIZE);
+	memcpy(buf+__TLS_CLIENT_RANDOM_SIZE,context->local_random, __TLS_SERVER_RANDOM_SIZE);
+	memcpy(buf+__TLS_CLIENT_RANDOM_SIZE+__TLS_SERVER_RANDOM_SIZE, packet.buf + 9, packet.len-9);
+
+	fnWDT_Restart();
+	mbedtls_sha512(buf,__TLS_CLIENT_RANDOM_SIZE+__TLS_SERVER_RANDOM_SIZE+packet.len-9,publicK,0);	
+	Cm_Ram_Inter(publicK,32);
+	Cm_Ram_Inter(publicK+32,32);
+	fnWDT_Restart();
+	uECC_sign(context->ecc_priv,publicK,64,sign_out,p_curve);
+	fnWDT_Restart();
 		//for test
 #if 0		
 		fnWDT_Restart();
@@ -725,11 +684,8 @@ struct TLSPacket *tls_build_server_key_exchange(struct TLSContext *context, int 
 		fnWDT_Restart();
 #endif		
 		//test end
-
-		fnWDT_Restart();
 #if 1		
-		tls_packet_uint8(&packet,sha512);
-	//tls_packet_uint8(&packet,sha256);
+	tls_packet_uint8(&packet,sha512);
 	tls_packet_uint8(&packet,ecdsa);
 #endif		
 #if 1	
@@ -746,7 +702,6 @@ struct TLSPacket *tls_build_server_key_exchange(struct TLSContext *context, int 
 	Cm_Ram_Inter(sign_out,32);
 	Cm_Ram_Inter(sign_out+32,32);
 	tls_packet_append(&packet,sign_out, 32);
-//	tls_packet_append(&packet,sign_out+32, 32);
 #if 1	
 	tls_packet_uint16(&packet,0x0221);
 	tls_packet_uint8(&packet,0x00);

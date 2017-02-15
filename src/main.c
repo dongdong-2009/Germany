@@ -67,11 +67,26 @@ void ProcHalfSec(void)
 }
 
 extern uint32_t sec;
+void Cm_Ram_Inter(uint8_t *buf,uint16_t Len);
+void Signature_Measure(void);
 void ProcSec(void)
 {
 	int i;
+	uint64_t m_me;
 	uint8_t *m_malloc_buf;
 	Flag.Clk &= ~F_Sec;
+	E2P_RData(&m_me,CMon_EC_Pp0,8);
+	Cm_Ram_Inter((uint8_t *)&m_me,8);
+	m_me++;
+	Cm_Ram_Inter((uint8_t *)&m_me,8);
+	E2P_WData(CMon_EC_Pp0,&m_me,8);
+	
+	E2P_RData(&m_me,CMon_EC_Pn0,8);
+	Cm_Ram_Inter((uint8_t *)&m_me,8);
+	m_me++;
+	Cm_Ram_Inter((uint8_t *)&m_me,8);
+	E2P_WData(CMon_EC_Pn0,&m_me,8);
+	Signature_Measure();
 	Comm.SecPulseCnt++;
 	sec++;
 	//ID_Read(&Para.Ua[0],0x0085,DLen_3);
@@ -564,7 +579,7 @@ int  main ( void )
 #endif
 	//	if (Flag.Clk & F_HalfSec) ProcHalfSec();
 		if (Flag.Clk & F_Sec) ProcSec();
-	//	if (Flag.Clk & F_Min) ProcMin();
+		if (Flag.Clk & F_Min) ProcMin();
 	//	if (Flag.Clk & F_Hour) ProcHour();
 	//	if (Flag.Clk & F_Day) ProcDay();
 		CM_HDLC_Receive();

@@ -98,7 +98,9 @@ void InitServerId(void)
 	m_lmn_info.b_hdlc_LMN_Addr=68;//03;
 	i_Meter_Addr = 68;
 	m_lmn_info.b_hdlc_slot = 1;
-	E2P_WData(E2P_Manufactor_ID,"HZSunrise1",10);
+	//E2P_WData(E2P_Manufactor_ID,"STC",3);
+	E2P_WData(E2P_Manufactor_ID,"LOG",3);
+	//E2P_WData(E2P_Manufactor_ID,"STC0063539421",14);
 	memcpy(b_Hdlc_sendbuf,"1.0.00",6);
 	E2P_WData(E2P_FirmwareVer,b_Hdlc_sendbuf,6);
 #if 0	
@@ -111,7 +113,7 @@ void InitServerId(void)
 	//gprs_ms+=1;
 //	E2P_WData(E2P_FirmWareCheck,(unsigned char*)&i_rx_len,2);
 	E2P_WData(E2P_FirmWareCheck,b_Hdlc_sendbuf,2);
-	i_rx_len=3;
+	i_rx_len=1;
 	E2P_WData(E2P_Director,(unsigned char*)&i_rx_len,1);
 	i_rx_len=0;
 	i_send_len=0;
@@ -388,12 +390,12 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 			}
 			//if(oldControlByte==HDLC_RR) // || oldControlByte==HDLC_I)
 			//	return 0;
-			if(Connected==0)
+			/*if(Connected==0)
 			{
 			//	buf[ptr++]=HDLC_RR;
 				buf[ptr++]=HDLC_DM;
 			}
-			else
+			else*/
 			{
 			//	if(oldControlByte==HDLC_UI)
 				//	return 0;
