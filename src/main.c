@@ -66,13 +66,14 @@ void ProcHalfSec(void)
 //	CM_HDLC_Receive();
 }
 
-
+extern uint32_t sec;
 void ProcSec(void)
 {
 	int i;
 	uint8_t *m_malloc_buf;
 	Flag.Clk &= ~F_Sec;
 	Comm.SecPulseCnt++;
+	sec++;
 	//ID_Read(&Para.Ua[0],0x0085,DLen_3);
 //	SynData1s();
 //m_malloc_buf = malloc(10);
@@ -481,7 +482,7 @@ int  main ( void )
 	SystemDelay(1000);  // 等待第1次上电的稳定
 	fnWDT_Restart();
 	fnTarget_Init();
-	//cacheOff();
+	cacheOff();
 	//fnLcd_Init();
 	__enable_irq();
 	Serial_Open(921600,8,0);

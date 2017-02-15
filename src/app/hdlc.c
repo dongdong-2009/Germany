@@ -98,6 +98,23 @@ void InitServerId(void)
 	m_lmn_info.b_hdlc_LMN_Addr=68;//03;
 	i_Meter_Addr = 68;
 	m_lmn_info.b_hdlc_slot = 1;
+	E2P_WData(E2P_Manufactor_ID,"HZSunrise1",10);
+	memcpy(b_Hdlc_sendbuf,"1.0.00",6);
+	E2P_WData(E2P_FirmwareVer,b_Hdlc_sendbuf,6);
+#if 0	
+	for(i_rx_len=0,i_send_len=0;i_send_len<6;++i_send_len)
+	{
+		i_rx_len+=b_Hdlc_sendbuf[i_send_len];
+	}
+#endif	
+	i_rx_len=DoCrc16(0xffff,b_Hdlc_sendbuf,6);
+	//gprs_ms+=1;
+//	E2P_WData(E2P_FirmWareCheck,(unsigned char*)&i_rx_len,2);
+	E2P_WData(E2P_FirmWareCheck,b_Hdlc_sendbuf,2);
+	i_rx_len=3;
+	E2P_WData(E2P_Director,(unsigned char*)&i_rx_len,1);
+	i_rx_len=0;
+	i_send_len=0;
 	E2P_WData( Server_ID,m_lmn_info.b_sub_identification, 10 ); 
 	E2P_WData(E2P_SymmetricalKey,keytext,16);
 }
@@ -380,12 +397,13 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 			{
 			//	if(oldControlByte==HDLC_UI)
 				//	return 0;
-				if(oldControlByte==HDLC_RR)
+			/*	if(oldControlByte==HDLC_RR)
 					buf[ptr++]=HDLC_UA;
-				else
+					return 0;
+				else*/
 				//b_seq = (b_seq&0xf0)| ((b_Hdlc_buf[7]>>4)&0xe);
-				buf[ptr++]=HDLC_RR|((b_seq+0x20)&0xf0);
-				//buf[ptr++]=HDLC_RR|((b_seq)&0xf0);
+				//buf[ptr++]=HDLC_RR|((b_seq+0x20)&0xf0);
+				buf[ptr++]=HDLC_RR|((b_seq)&0xf0);
 				//buf[ptr++]=HDLC_I|(b_seq);
 			}
 
@@ -490,6 +508,14 @@ void CM_HDLC_Receive(void)
 		return;
 	}*/
 	//test end
+#if 1	
+	if(hdlc_back && (ControlByte==HDLC_RR) && (Serial_Status()==0))
+	{
+		i_send_len=hdlc_back();
+		hdlc_back=0;
+		ControlByte=HDLC_I;
+	}
+#endif	
 	i_rx_length=1024-i_rx_len;
 	if(i_rx_length>1024)
 	{
@@ -662,7 +688,7 @@ void CM_HDLC_Receive(void)
 				b_seq = (((b_Hdlc_buf[7]>>5)&7)<<1) | ((((b_Hdlc_buf[7]>>1))&7)<<5);
 			  b_seq +=0x20;
 		//	b_seq = (((((b_seq>>5)&0x7)+1)%8)<<5) | (b_seq&0x1e);
-#if 0		 //TEST delete	
+#if 1		 //TEST delete	
 			ControlByte=HDLC_RNR;
 			i_send_length=HDLC_Assemble(b_short_frame,0);
 			Serial_Write(b_short_frame,i_send_length);
@@ -672,10 +698,12 @@ void CM_HDLC_Receive(void)
 			{
 				case HDLC_I_PROTOCOL_TLS_COSEM:
 					i_send_len=Cm_Tls_Analys(b_Hdlc_buf+10,i_rx_length,b_Hdlc_sendbuf+10,&hdlc_back);
-					//Serial_Read(b_Hdlc_buf,256);
-					//i_send_length=HDLC_Assemble(b_Hdlc_sendbuf,i_send_len);
-					//Serial_Write(b_Hdlc_sendbuf,i_send_length);
+				/*	if(i_send_len<70)
+					{
+						i_send_length=HDLC_Assemble(b_Hdlc_sendbuf,i_send_len);
+						Serial_Write(b_Hdlc_sendbuf,i_send_length);
 					//i_send_len=0;
+					}*/
 					break;
 		//		case HDLC_I_PROTOCOL_TLS_NOCONTENT:
 		//			break;
@@ -750,6 +778,12 @@ void CM_HDLC_Receive(void)
 			//		break;
 				default:
 					break;
+			}
+			if(i_send_len==0)
+			{
+				ControlByte=HDLC_DISC;
+				i_send_length=HDLC_Assemble(b_short_frame,0);
+				Serial_Write(b_short_frame,i_send_length);
 			}
 			res_count=ms_count+1;
 	//		Serial_Read(b_Hdlc_buf,256);

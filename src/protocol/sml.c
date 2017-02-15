@@ -1734,8 +1734,8 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
 	TempAdd=OrderRecord[4].OLStartAdd-1;
 	
 	attri_num=SMLComm.RecBuf[TempAdd];
-	if(attri_num==0x73)
-	SMLComm.SendBuf[SMLComm.SendPtr]=SMLComm.RecBuf[TempAdd];
+	if(attri_num==0x73 || attri_num==0x76)
+		SMLComm.SendBuf[SMLComm.SendPtr]=SMLComm.RecBuf[TempAdd];
 	else
 		SMLComm.SendBuf[SMLComm.SendPtr]=0x72;
 #endif	
@@ -1755,6 +1755,17 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
 		RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[6].OLStartAdd]),OrderRecord[6].OLLength);//дattri
 		SMLComm.SendPtr+=OrderRecord[6].OLLength;
 	}
+	else if(attri_num==0x76)
+	{
+		RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[6].OLStartAdd]),OrderRecord[6].OLLength);//дattri
+		SMLComm.SendPtr+=OrderRecord[6].OLLength;
+		RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[7].OLStartAdd]),OrderRecord[7].OLLength);//дattri
+		SMLComm.SendPtr+=OrderRecord[7].OLLength;
+		RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[8].OLStartAdd]),OrderRecord[8].OLLength);//дattri
+		SMLComm.SendPtr+=OrderRecord[8].OLLength;
+		RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[9].OLStartAdd]),OrderRecord[9].OLLength);//дattri
+		SMLComm.SendPtr+=OrderRecord[9].OLLength;
+	}		
 #endif	
   SMLComm.SendBuf[SMLComm.SendPtr]=0x73;
   SMLComm.SendPtr++;
@@ -1765,14 +1776,20 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
 #if 0	
 	SMLComm.SendBuf[SMLComm.SendPtr]=0x71;
 #else
-	if(attri_num==0x73)
-	SMLComm.SendBuf[SMLComm.SendPtr]=attri_num-1;
+	if(attri_num==0x73 || attri_num==0x76)
+		SMLComm.SendBuf[SMLComm.SendPtr]=attri_num-1;
 	else
 		SMLComm.SendBuf[SMLComm.SendPtr]=0x71;
 #endif	
   SMLComm.SendPtr++;
-	SMLComm.SendBuf[SMLComm.SendPtr]=0x73;
+	/*if(attri_num==0x73 || attri_num==0x76)
+	{
+		SMLComm.SendBuf[SMLComm.SendPtr]=attri_num;
+	}
+	else*/
+		SMLComm.SendBuf[SMLComm.SendPtr]=0x73;
   SMLComm.SendPtr++;
+	
 	RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[5].OLStartAdd]),OrderRecord[5].OLLength);//дattri
   SMLComm.SendPtr+=OrderRecord[5].OLLength;
   SMLComm.SendBuf[SMLComm.SendPtr]=0x72;
@@ -1924,11 +1941,11 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
     break;
   }
   SMLComm.SendPtr += Len;
-  SMLComm.SendBuf[SMLComm.SendPtr]=0x01;	
-  if((OBISType == 0x56)||(OBISType == 0x55))
+  SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
+/*  if((OBISType == 0x56)||(OBISType == 0x55))
   {
     SMLComm.SendBuf[++SMLComm.SendPtr]=0x01;
-  }
+  }*/
 #if 0
 #else
 /*	
@@ -1968,22 +1985,38 @@ uint8_t DoProSOBIS(uint8_t OBISNo)
   uint16_t	State;
   uint8_t RamBuf[10];
   sml_function sml_callback;
+	sml_beforefun smal_callbefore;
+	uint8_t ret;
 	//if(OBISNo==16  || (OBISNo==19) || (OBISNo==20))
-	if(OBISNo==16)
-		return ReturnERR15;
+/*	if(OBISNo==16)
+		return ReturnERR15;*/
+	
   Len = SMLOBISTab[OBISNo].Len;
   OBISType = SMLOBISTab[OBISNo].OBISType;
   Adder = SMLOBISTab[OBISNo].Adder;
   State = SMLOBISTab[OBISNo].State;
 	sml_callback = SMLOBISTab[OBISNo].CallBack;
+	smal_callbefore = SMLOBISTab[OBISNo].CallBefore;
+	TempAdd=OrderRecord[14].OLStartAdd;
+  TempLength=OrderRecord[14].OLLength;
+	if(smal_callbefore)
+	{
+		ret=smal_callbefore(&SMLComm.RecBuf[TempAdd+1],&SMLComm.SendBuf[SMLComm.SendPtr]);
+		if(ret!=ReturnOK)
+			return ret;
+	}
+	if((XPERMIT&State)==XPERMIT)
+		return(ReturnERR15);
 	if((State & WRITE) != WRITE)
 		return(ReturnERR10);
   
  // TempAdd=OrderRecord[9].OLStartAdd;
   //TempLength=OrderRecord[9].OLLength;
 	
-	TempAdd=OrderRecord[14].OLStartAdd;
-  TempLength=OrderRecord[14].OLLength;
+	if((SMLComm.RecBuf[TempAdd]&0x70)!=(OBISType&0x70))
+	{
+		return ReturnERR15;
+	}
 	if(SMLComm.RecBuf[TempAdd]&0x80)
 	{
 		TextLen=(SMLComm.RecBuf[TempAdd]&0xf)<<4;
@@ -1995,6 +2028,7 @@ uint8_t DoProSOBIS(uint8_t OBISNo)
 		TextLen=(SMLComm.RecBuf[TempAdd]&0xf);
 		TextLen-=1;
 	}
+	
 	if(TextLen!=Len)
 		return ReturnERR14;
 	

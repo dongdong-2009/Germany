@@ -222,6 +222,7 @@ int16_t CmEnAES128(uint8_t * pkey,uint8_t *iv,uint8_t *pOutTag,uint8_t *data,uin
   }
 	
 	for(j=0;j<len;)
+//	for(j=0;j<=len;)  //2017.2.14 modified
 	{
 		if(j>0)
 		{
@@ -234,6 +235,10 @@ int16_t CmEnAES128(uint8_t * pkey,uint8_t *iv,uint8_t *pOutTag,uint8_t *data,uin
 		{
 			b_padding=j+16-len;
 		}
+	/*	if((j+15)>len)
+		{
+			b_padding=j+15-len;
+		}*/
 		for(i=0;i<4;++i)
 		{
 			for(k=0,tmp_cix=0;(k<4);++k)
