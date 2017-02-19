@@ -16,6 +16,7 @@
 #include "uECC.h"
 #include "mbedtls/sha256.h"
 #include <stdlib.h>
+#include "iec1107.h"
 #include "GetMeterData.h"
 #include "MeterDataType.h"
 
@@ -75,6 +76,7 @@ void ProcSec(void)
 	uint64_t m_me;
 	uint8_t *m_malloc_buf;
 	Flag.Clk &= ~F_Sec;
+#if 0	
 	E2P_RData(&m_me,CMon_EC_Pp0,8);
 	Cm_Ram_Inter((uint8_t *)&m_me,8);
 	m_me++;
@@ -86,9 +88,17 @@ void ProcSec(void)
 	m_me++;
 	Cm_Ram_Inter((uint8_t *)&m_me,8);
 	E2P_WData(CMon_EC_Pn0,&m_me,8);
+#endif	
+/*	Para.Pp0++;
+	Para.Pn0++;
+	Para.Ua=220;
+	Para.Ub=221;
+	Para.Uc=219;
+	Para.Pt=2000;*/
 	Signature_Measure();
 	Comm.SecPulseCnt++;
 	sec++;
+	Judge_Cryto();
 	//ID_Read(&Para.Ua[0],0x0085,DLen_3);
 //	SynData1s();
 //m_malloc_buf = malloc(10);
@@ -451,7 +461,7 @@ int  main ( void )
 	// uint8_t key1[16];
 	// uint8_t plaintext1[32];
 //	 uint8_t Kmac[16],Kenc[16],Lmac[16],Lenc[16];
-#if 1
+#if 0
 	unsigned char L[16];
 //  unsigned char	K1[16]={0x86,0x1e,0x70,0xa7,0xfc,0x6b,0xfa,0x12,0x43,0x0d,0x47,0x0a,0x78,0xbf,0xd2,0x34};
 //  unsigned char	K2[16]={0x09,0x1b,0x08,0xf9,0xc9,0x3a,0xf1,0x96,0xf7,0x81,0x38,0x91,0x01,0xdf,0xb2,0xff};
@@ -464,7 +474,7 @@ int  main ( void )
 #endif
 		//	uint32_t Len=0x166;
 			//uint32_t Len=0x167;
-	uint32_t Len=0x169;
+//	uint32_t Len=0x169;
 			/* //82408571c3e2424540207f833b6dda69
 		unsigned char key[16] = {
           0xff,0xff,0xff,0xff,0xfc,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
@@ -497,10 +507,10 @@ int  main ( void )
 	SystemDelay(1000);  // 等待第1次上电的稳定
 	fnWDT_Restart();
 	fnTarget_Init();
-	cacheOff();
+	//cacheOff();
 	//fnLcd_Init();
 	__enable_irq();
-	Serial_Open(921600,8,0);
+	Serial_Open(0,921600,8,0);
 	//Serial_Open(115200,8,0);
 	//CmWmbus_Init(0);
 	InitServerId();
@@ -583,6 +593,7 @@ int  main ( void )
 	//	if (Flag.Clk & F_Hour) ProcHour();
 	//	if (Flag.Clk & F_Day) ProcDay();
 		CM_HDLC_Receive();
+		iec1107_read();
 	}
 }
 

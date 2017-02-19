@@ -148,9 +148,9 @@ const METERDATATAB MeterDataTab[] =
 //	0x0082,	0x0100010800FF,	CMon_MD_Q46,	DLen_4,		F_DRS_ReadEN+DRS_Eeprom2, 		DLen_5,		DLen_3,		DDU_kvar,	//EEPROM:00000.000,	R,	定时刷新，Kw,	无功Q4最大需量T6,	,	$14,	$15
 //	0x0083,	0x0100010800FF,	CMon_MD_Q47,	DLen_4,		F_DRS_ReadEN+DRS_Eeprom2, 		DLen_5,		DLen_3,		DDU_kvar,	//EEPROM:00000.000,	R,	定时刷新，Kw,	无功Q4最大需量T7,	,	$14,	$15
 //	0x0084,	0x0100010800FF,	CMon_MD_Q48,	DLen_4,		F_DRS_ReadEN+DRS_Eeprom2, 		DLen_5,		DLen_3,		DDU_kvar,	//EEPROM:00000.000,	R,	定时刷新，Kw,	无功Q4最大需量T8,	$13,	$14,	$15
-	0x0085,	0x01,0x00,0x20,0x07,0x00,0xff,	(unsigned long)&Para.Ua[0],	DLen_3,		F_DRS_ReadEN+DRS_instantaneous+F_DRS_SYNData, 	DLen_4,		DLen_2,		DDU_V,	//RAM:0000.00,	R,	定时刷新，V,	A相电压,	,	$14,	$15
-	0x0086,	0x01,0x00,0x34,0x07,0x00,0xff,	(unsigned long)&Para.Ub[0],	DLen_3,		F_DRS_ReadEN+DRS_instantaneous+F_DRS_SYNData, 	DLen_4,		DLen_2,		DDU_V,	//RAM:0000.00,	R,	定时刷新，V,	B相电压,	,	$14,	$15
-	0x0087,	0x01,0x00,0x48,0x07,0x00,0xff,	(unsigned long)&Para.Uc[0],	DLen_3,		F_DRS_ReadEN+DRS_instantaneous+F_DRS_SYNData, 	DLen_4,		DLen_2,		DDU_V,	//RAM:0000.00,	R,	定时刷新，V,	C相电压,	,	$14,	$15
+	0x0085,	0x01,0x00,0x20,0x07,0x00,0xff,	(unsigned long)&Para.Ua,	DLen_3,		F_DRS_ReadEN+DRS_instantaneous+F_DRS_SYNData, 	DLen_4,		DLen_2,		DDU_V,	//RAM:0000.00,	R,	定时刷新，V,	A相电压,	,	$14,	$15
+	0x0086,	0x01,0x00,0x34,0x07,0x00,0xff,	(unsigned long)&Para.Ub,	DLen_3,		F_DRS_ReadEN+DRS_instantaneous+F_DRS_SYNData, 	DLen_4,		DLen_2,		DDU_V,	//RAM:0000.00,	R,	定时刷新，V,	B相电压,	,	$14,	$15
+	0x0087,	0x01,0x00,0x48,0x07,0x00,0xff,	(unsigned long)&Para.Uc,	DLen_3,		F_DRS_ReadEN+DRS_instantaneous+F_DRS_SYNData, 	DLen_4,		DLen_2,		DDU_V,	//RAM:0000.00,	R,	定时刷新，V,	C相电压,	,	$14,	$15
 	0x0088,	0x01,0x00,0x1F,0x07,0x00,0xff,	(unsigned long)&Para.Ia[0],	DLen_3,		F_DRS_ReadEN+DRS_instantaneous+F_DRS_SYNData, 	DLen_3,		DLen_3,		DDU_A,	//RAM:000.000,	R,	定时刷新，A,	A相电流,	,	$14,	$15
 	0x0089,	0x01,0x00,0x33,0x07,0x00,0xff,	(unsigned long)&Para.Ib[0],	DLen_3,		F_DRS_ReadEN+DRS_instantaneous+F_DRS_SYNData, 	DLen_3,		DLen_3,		DDU_A,	//RAM:000.000,	R,	定时刷新，A,	B相电流,	,	$14,	$15
 	0x008A,	0x01,0x00,0x47,0x07,0x00,0xff,	(unsigned long)&Para.Ic[0],	DLen_3,		F_DRS_ReadEN+DRS_instantaneous+F_DRS_SYNData, 	DLen_3,		DLen_3,		DDU_A,	//RAM:000.000,	R,	定时刷新，A,	C相电流,	,	$14,	$15

@@ -492,6 +492,8 @@ void UART3_HANDLER(void)
 //  	return;
 }
 #endif
+#if 0
+
 ///------Ë«ºËÍ¨ÐÅ----------
 void UART5_HANDLER(void)
 {
@@ -554,6 +556,7 @@ void UART5_HANDLER(void)
 		
 	return;
 }
+#endif
 void KBI_HANDLER(void)
 {
 

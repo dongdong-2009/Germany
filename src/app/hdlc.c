@@ -10,6 +10,9 @@
 #undef TEST
 typedef int16_t  (*Hdlc_back_function)();
 extern int16_t tls_back_fun(void);
+#define HDLC_READ(buf,len) Serial_Read(0,buf,len)
+#define HDLC_WRITE(buf,len) (Serial_Write(0,buf,len))
+#define HDLS_STATUS				Serial_Status(0)
 Hdlc_back_function hdlc_back;
 uint8_t i_Meter_Addr;
 uint8_t i_Meter_Prot,i_Meter_Prot_old;
@@ -26,6 +29,7 @@ uint8_t b_Hdlc_buf[1024]={0x7E,0xA0,0x74,0x88,0x03,0x02,0x03,0x10,0xAA,0xC6,0x16
 0x00,0x00,0x00,0x0D,0x00,0x08,0x00,0x06,0x04,0x03,0x05,0x03,0x06,0x03,0x00,0x0F,
 0x00,0x01,0x01,0x65,0xD8,0x7E};
 uint8_t b_Hdlc_sendbuf[1024];
+#if 0
 uint8_t sml_test[256]={0x1B,0x1B,0x1B,0x1B,0x01,0x01,0x01,0x01,0x76,0x05,0x01,0x02,0x03,0x04,0x62,0x00,
 0x62,0x00,0x72,0x65,0x00,0x00,0x01,0x01,0x76,0x01,0x0B,0x45,0x53,0x2D,0x48,0x44,
 0x4C,0x43,0x2D,0x42,0x72,0x05,0x01,0x02,0x03,0x04,0x0B,0x0A,0x01,0x45,0x4D,0x48,
@@ -37,6 +41,7 @@ uint8_t sml_test[256]={0x1B,0x1B,0x1B,0x1B,0x01,0x01,0x01,0x01,0x76,0x05,0x01,0x
 0x01,0xB1,0x00,0x76,0x05,0x01,0x02,0x03,0x04,0x62,0x00,0x62,0x00,0x72,0x65,0x00,
 0x00,0x02,0x01,0x71,0x01,0x63,0xBB,0xB5,0x00,0x00,0x00,0x00,0x1B,0x1B,0x1B,0x1B,
 0x1A,0x03,0x11,0x9B};
+#endif
 uint8_t ControlByte,oldControlByte;
 uint8_t Connected;
 uint8_t b_short_frame[16];
@@ -71,6 +76,7 @@ void InitServerId(void)
 	
 	m_lmn_info.b_sub_identification[0]=0x0A;
 	m_lmn_info.b_sub_identification[1]=0x01;
+#if 0	
 	/*m_lmn_info.b_sub_identification[2]='S';
 	m_lmn_info.b_sub_identification[3]='U';
 	m_lmn_info.b_sub_identification[4]='N';
@@ -94,8 +100,13 @@ void InitServerId(void)
 	m_lmn_info.b_sensor_identification[2]='I';
 	m_lmn_info.b_sensor_identification[3]='S';
 	m_lmn_info.b_sensor_identification[4]='K';
+#else
+	memcpy(m_lmn_info.b_sub_identification+2,Manufacture,3);
+	memcpy(m_lmn_info.b_sub_identification+7,"STC",3);
+	memcpy(m_lmn_info.b_sensor_identification,m_lmn_info.b_sub_identification,9);
+#endif	
 	m_lmn_info.b_sensor_identification[9]=0x18;
-	m_lmn_info.b_hdlc_LMN_Addr=68;//03;
+	m_lmn_info.b_hdlc_LMN_Addr=3;
 	i_Meter_Addr = 68;
 	m_lmn_info.b_hdlc_slot = 1;
 	//E2P_WData(E2P_Manufactor_ID,"STC",3);
@@ -118,7 +129,8 @@ void InitServerId(void)
 	i_rx_len=0;
 	i_send_len=0;
 	E2P_WData( Server_ID,m_lmn_info.b_sub_identification, 10 ); 
-	E2P_WData(E2P_SymmetricalKey,keytext,16);
+//	E2P_RData(keytext,E2P_SymmetricalKey,16);
+//	E2P_WData(E2P_SymmetricalKey,keytext,16);
 }
 #if 1
 unsigned int MP_FCS(uint16_t fcs,uint16_t c)
@@ -256,7 +268,7 @@ uint8_t GetControlByte(uint8_t SControlByte )
 //返回0，接收正确
 int16_t Hdlc_Check(uint8_t *buf,uint16_t len)
 {
-	uint16_t i,j,frame_len;
+	uint16_t i,frame_len;
 	int16_t ret;
 	uint16_t i_crc;
 	
@@ -400,8 +412,9 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 			//	if(oldControlByte==HDLC_UI)
 				//	return 0;
 			/*	if(oldControlByte==HDLC_RR)
-					buf[ptr++]=HDLC_UA;
-					return 0;
+					//buf[ptr++]=HDLC_UA;
+					//return 0;
+					buf[ptr++]=HDLC_DISC;
 				else*/
 				//b_seq = (b_seq&0xf0)| ((b_Hdlc_buf[7]>>4)&0xe);
 				//buf[ptr++]=HDLC_RR|((b_seq+0x20)&0xf0);
@@ -448,10 +461,11 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 			buf[ptr++]=HDLC_RNR|(b_seq&0xf0);
 			break;
 		case HDLC_SNRM:
-			b_seq=0xf0;
+			b_seq=0x10;
 			Connected=255;
 			ui_flag=1;
 			buf[ptr++]=HDLC_UA;
+			Close_tls();
 		#if 0
 		  buf[10+Len]=0x81;Len++;
 			buf[10+Len]=0x80;Len++;
@@ -463,7 +477,7 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 		#endif
 			break;
 		case HDLC_DISC:
-			b_seq=0xf0;
+			b_seq=0x10;
 			Connected=0;
 			buf[ptr++]=HDLC_DM;
 			break;
@@ -511,7 +525,7 @@ void CM_HDLC_Receive(void)
 	}*/
 	//test end
 #if 1	
-	if(hdlc_back && (ControlByte==HDLC_RR) && (Serial_Status()==0))
+	if(hdlc_back && (ControlByte==HDLC_RR) && (HDLS_STATUS==0))
 	{
 		i_send_len=hdlc_back();
 		hdlc_back=0;
@@ -524,7 +538,7 @@ void CM_HDLC_Receive(void)
 		i_rx_len=0;
 		i_rx_length=1024;
 	}
-	i_rx_length=Serial_Read(b_Hdlc_buf+i_rx_len,i_rx_length);
+	i_rx_length=HDLC_READ(b_Hdlc_buf+i_rx_len,i_rx_length);
 	/*if(i_rx_len)
 	{
 		if(i_rx_len>2)
@@ -667,7 +681,7 @@ void CM_HDLC_Receive(void)
 							i_send_length=HDLC_Assemble(b_Hdlc_sendbuf,0);					
 						if(i_send_length)
 						{
-							Serial_Write(b_Hdlc_sendbuf,i_send_length);
+							HDLC_WRITE(b_Hdlc_sendbuf,i_send_length);
 							i_send_length=0;
 						}
 					}
@@ -693,7 +707,7 @@ void CM_HDLC_Receive(void)
 #if 1		 //TEST delete	
 			ControlByte=HDLC_RNR;
 			i_send_length=HDLC_Assemble(b_short_frame,0);
-			Serial_Write(b_short_frame,i_send_length);
+			HDLC_WRITE(b_short_frame,i_send_length);
 			ControlByte=HDLC_I;
 #endif			
 			switch(i_Meter_Prot)
@@ -783,9 +797,9 @@ void CM_HDLC_Receive(void)
 			}
 			if(i_send_len==0)
 			{
-				ControlByte=HDLC_DISC;
+				//ControlByte=HDLC_DISC;
 				i_send_length=HDLC_Assemble(b_short_frame,0);
-				Serial_Write(b_short_frame,i_send_length);
+				HDLC_WRITE(b_short_frame,i_send_length);
 			}
 			res_count=ms_count+1;
 	//		Serial_Read(b_Hdlc_buf,256);
@@ -820,7 +834,7 @@ void CM_HDLC_Receive(void)
 			}
 			RAM_Write(b_Hdlc_sendbuf+10,(uint8_t *)&m_lmn_info,32);
 			i_send_length=HDLC_Assemble(b_Hdlc_sendbuf,32);
-			Serial_Write(b_Hdlc_sendbuf,i_send_length);
+			HDLC_WRITE(b_Hdlc_sendbuf,i_send_length);
 #else
 			//i_send_length=Cm_Handle_Assign_Addr(b_Hdlc_buf+10,i_rx_length);
 			//if(((i_Meter_Prot==HDLC_UI_PROTOCOL_ADDR_ASSIGN)&&i_send_length) || ((i_Meter_Prot==HLDC_UI_PROTOCOL_ADDR_VERIFY)&&(i_send_length==0)))

@@ -1714,6 +1714,8 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
   State = SMLOBISTab[OBISNo].State;
   sml_callback = SMLOBISTab[OBISNo].CallBack;
 	smal_callbefore = SMLOBISTab[OBISNo].CallBefore;
+	if((XPERMIT&State)==XPERMIT)
+		return(ReturnERR15);
   SMLComm.SendPtr++;
   SMLComm.SendBuf[SMLComm.SendPtr]=0x73;
   SMLComm.SendPtr++;
@@ -1893,12 +1895,13 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
 	}
   switch(State & 0x00FF)
   {
-		case 0x70:
-			RAM_Write(&(SMLComm.SendBuf[++SMLComm.SendPtr]),(uint8_t*)Adder,Len);
+		case RAM_TYPE:
+			RAM_Write_Dev(&(SMLComm.SendBuf[++SMLComm.SendPtr]),(uint8_t*)Adder,Len);
 			break;
-		case 0x80:
+		case E2P_TYPE:
 			E2P_RData(&SMLComm.SendBuf[++SMLComm.SendPtr],Adder,Len);
 			break;
+#if 0		
   case 0x10:
     SMLComm.SendBuf[SMLComm.SendPtr] = 0x65;
     if((Flag.StatusWord & 0x0008) == 0)
@@ -1937,6 +1940,7 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
     //			SMLComm.SendBuf[SMLComm.SendPtr+4] = 0x32;
     //			SMLComm.SendBuf[SMLComm.SendPtr+2] = 0x31;
     break;	
+#endif	
   default:
     break;
   }
@@ -1981,9 +1985,9 @@ uint8_t DoProSOBIS(uint8_t OBISNo)
   uint16_t TempAdd,TempLength,TextLen;
   uint8_t	Len;
   uint8_t	OBISType;
-  uint16_t	Adder;
+  uint32_t	Adder;
   uint16_t	State;
-  uint8_t RamBuf[10];
+//  uint8_t RamBuf[10];
   sml_function sml_callback;
 	sml_beforefun smal_callbefore;
 	uint8_t ret;
@@ -2022,6 +2026,7 @@ uint8_t DoProSOBIS(uint8_t OBISNo)
 		TextLen=(SMLComm.RecBuf[TempAdd]&0xf)<<4;
 		TextLen=TextLen|(SMLComm.RecBuf[TempAdd+1]&0xf);
 		TextLen-=2;
+		//TempAdd++;
 	}
 	else
 	{
@@ -2069,6 +2074,10 @@ uint8_t DoProSOBIS(uint8_t OBISNo)
     }
     
   }
+	if(SMLComm.RecBuf[TempAdd]&0x80)
+	{
+		TempAdd++;
+	}
 //	if(SMLComm.RecBuf[TempAdd]
 //  if((State & WRITE) != WRITE)
   //  return(ReturnERR03);
@@ -2081,6 +2090,7 @@ uint8_t DoProSOBIS(uint8_t OBISNo)
   //		
   //	}else	
   //		E2P_WData(Adder,&(SMLComm.RecBuf[TempAdd+1]),Len);
+#if 0	
   switch(State & 0x00FF)
   {
   case 0x10:	//Time SETTING
@@ -2199,17 +2209,22 @@ uint8_t DoProSOBIS(uint8_t OBISNo)
   default:
     break;
   }
-  
-  switch(OBISType)
+#endif  
+  switch(State & 0x00FF)
   {	
-  default:
-    E2P_WData(Adder,&(SMLComm.RecBuf[TempAdd+1]),Len);
-    break;
+		case RAM_TYPE:
+			RAM_Write_Dev((unsigned char*)Adder,&(SMLComm.RecBuf[TempAdd+1]),Len);
+			break;
+		case E2P_TYPE:
+			E2P_WData(Adder,&(SMLComm.RecBuf[TempAdd+1]),Len);
+			break;
+		default:
+			break;
   }
   InitPara();
 	if(sml_callback)
 	{
-		sml_callback(GetPropP_Res);
+		sml_callback(SetPropP_Res);
 	}
   return(ReturnOK);
 }

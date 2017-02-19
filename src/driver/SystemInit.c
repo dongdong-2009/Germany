@@ -35,7 +35,7 @@ void fnGPIO_Configuration(void)
 	GPIO->PMA = 0xfb75ff3f;		     // 输入输出配置
 //	GPIO->PUA = 0xfb00fce0;             //上拉选择
 	GPIO->PIMA = 0;				    // P1.0 TURN P1.1 UP_OVER 
-	GPIO->PCA0 = 0x36000A20;	    // P2.0 RXD P2.1 TXD P2.2 IR_RXD P2.3 IR_TXD P2.4 STA P2.5 SWDIO P2.6 RXD3 P2.7 TXD3   复用口配置
+	GPIO->PCA0 = 0x34000A20;	    // P2.0 RXD P2.1 TXD P2.2 IR_RXD P2.3 IR_TXD P2.4 STA P2.5 SWDIO P2.6 RXD3 P2.7 TXD3   复用口配置
 	//GPIO->PCA1 = 0x00000020;	    // P3.2 SP(RTC) 复用口配置
 	GPIO->PCA1 = 0x00000000;
 	GPIO->PIEA = 0xfffffc00;            //输入使能

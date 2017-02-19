@@ -309,7 +309,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>3</Optim>
+            <Optim>4</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>0</OneElfS>
@@ -488,16 +488,6 @@
               <FileType>2</FileType>
               <FilePath>.\src\startup_RN821x.s</FilePath>
             </File>
-            <File>
-              <FileName>GetMeterData.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\src\driver\GetMeterData.c</FilePath>
-            </File>
-            <File>
-              <FileName>MeterDataTAB.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\src\driver\MeterDataTAB.c</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
@@ -572,6 +562,11 @@
               <FileName>smlfunc.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\protocol\smlfunc.c</FilePath>
+            </File>
+            <File>
+              <FileName>iec1107.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\protocol\iec1107.c</FilePath>
             </File>
           </Files>
         </Group>

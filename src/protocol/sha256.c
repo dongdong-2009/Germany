@@ -325,20 +325,19 @@ void mbedtls_sha256_finish( mbedtls_sha256_context *ctx, unsigned char output[32
 /*
  * output = SHA-256( input buffer )
  */
+static mbedtls_sha256_context m_ctx256;
 void mbedtls_sha256( const unsigned char *input, size_t ilen,
              unsigned char output[32], int is224 )
 {
-    mbedtls_sha256_context ctx;
+   // mbedtls_sha256_context ctx;
 
-    mbedtls_sha256_init( &ctx );
+    mbedtls_sha256_init( &m_ctx256 );
+    mbedtls_sha256_starts( &m_ctx256, is224 );
 		fnWDT_Restart();
-    mbedtls_sha256_starts( &ctx, is224 );
+    mbedtls_sha256_update( &m_ctx256, input, ilen );
 		fnWDT_Restart();
-    mbedtls_sha256_update( &ctx, input, ilen );
-		fnWDT_Restart();
-    mbedtls_sha256_finish( &ctx, output );
-		fnWDT_Restart();
-    mbedtls_sha256_free( &ctx );
+    mbedtls_sha256_finish( &m_ctx256, output );
+    mbedtls_sha256_free( &m_ctx256 );
 }
 
 #if defined(MBEDTLS_SELF_TEST)

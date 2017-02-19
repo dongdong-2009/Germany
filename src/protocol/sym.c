@@ -13,7 +13,7 @@ static uint32_t  Trans_Counter=0x0166;
 //static uint32_t  Trans_Counter=0x016e;
 //static uint32_t  Trans_Counter=0x0174;
 //uint8_t keytext[16]={0x01,0x23,0x45,0x67,0x89,0xAB,0xCD,0xEF,0x01,0x23,0x45,0x67,0x89,0xAB,0xCD,0xEF};
-uint8_t keytext[16]={0xA4,0x45,0x7D,0x73,0xF3,0xA8,0xED,0x56,0xB7,0x22,0x68,0xD9,0xB5,0x23,0x0F,0x7A};
+//uint8_t keytext[16]={0xA4,0x45,0x7D,0x73,0xF3,0xA8,0xED,0x56,0xB7,0x22,0x68,0xD9,0xB5,0x23,0x0F,0x7A};
 extern struct S_Hdlc_LMN_Info m_lmn_info;
 uint8_t Kenc[16],Kmac[16],Lenc[16],Lmac[16];
 //static uint8_t b_lmn_cert[512];
@@ -149,10 +149,25 @@ int16_t Sym2(uint8_t *recvbuf,uint8_t *sendbuf,uint16_t len)
 	}
 	return ret;
 }
-
+const uint8_t decode_pos[8]={0x30,0x77,0x02,0x01,0x01,0x04,0x20};
+uint16_t Get_LMN_Cert_Len(uint8_t *recvbuf,uint16_t ret)
+{
+	uint16_t len;
+	ret=500;
+	for(len=0x139;len<ret;++len)
+	{
+		if(!memcmp(recvbuf+12+len,decode_pos,7))
+			break;
+	}
+	if(len<ret)
+		ret=len;
+	else
+		ret=0x193;
+	return ret;
+}
 int16_t Sym3(uint8_t *recvbuf,uint8_t *sendbuf,uint16_t len)
 {
-	int16_t ret;
+	uint16_t ret;
 	uint8_t *ecc_addr;
 	ret=0;
 	if(Word_Long(recvbuf+5)==(Trans_Counter+1))
@@ -161,23 +176,31 @@ int16_t Sym3(uint8_t *recvbuf,uint8_t *sendbuf,uint16_t len)
 		CmDeAES128(Lenc,0,0,recvbuf+9,len-25,recvbuf+9);
 		len-=9;
 		//memcpy(b_lmn_cert,recvbuf+9,528);
-		if((recvbuf[9]==0x30) && (recvbuf[10]==0x82))
+	//	if(((recvbuf[9]==0x30) && (recvbuf[10]==0x82)) || ((recvbuf[9]==0) && (recvbuf[10]==0)))
+		ret=recvbuf[11]<<8 | recvbuf[12];
+		if(ret>500)
 		{
+			ret=Get_LMN_Cert_Len(recvbuf+13,ret);
+		}
+		if(ret<500)
+		{
+		//	ret=recvbuf[11]<<8 | recvbuf[12];
+			memcpy(b_lmn_cert,recvbuf+9,ret+4);
+		/*	if(ret>500)
+				ret=500;
+			memcpy(b_lmn_cert,recvbuf+9,ret);*/
 			ecc_addr=Cm_Get_ECC_Addr();
-			ret=recvbuf[11]<<8 | recvbuf[12];
-		//	memcpy(b_lmn_cert,recvbuf+9,ret+4);
-			if(len>512)
-				len=512;
-			memcpy(b_lmn_cert,recvbuf+9,len);
 			memcpy(ecc_addr,recvbuf+ret+20,32);    //+9+ret+4+7
-			E2P_WData( PublicKey_Y,recvbuf+ret+70,64);
+			//E2P_WData( PublicKey_Y,recvbuf+ret+70,64);
 			for(len=0;len<16;++len)
 			{
 				ecc_addr[len] ^= ecc_addr[31-len];
 				ecc_addr[31-len] ^= ecc_addr[len];
 				ecc_addr[len] ^= ecc_addr[31-len];
 			}
-			E2P_WData( E2P_LMN_Certi,recvbuf+9,len-25);
+			E2P_WData( E2P_PrivateKey,ecc_addr,32);
+			Cm_Make_Public_Key();
+		//	E2P_WData( E2P_LMN_Certi,recvbuf+9,len-25);
 		}
 	//	else
 		//	return 0;
@@ -212,8 +235,11 @@ int16_t Sym4(uint8_t *recvbuf,uint8_t *sendbuf,uint16_t len)
 		//CmDeAES128(Lenc,0,0,recvbuf+9,len-9,recvbuf+9);
 		CmDeAES128(Lenc,0,0,recvbuf+9,len-25,recvbuf+9);
 		len-=25;
-		E2P_WData( E2P_SMGW_Certi,recvbuf+9,len-25);
-		memcpy(b_gw_cert,recvbuf+9,len-25);
+	//	E2P_WData( E2P_SMGW_Certi,recvbuf+9,len-25);
+		if(len>256)
+			memcpy(b_gw_cert,recvbuf+9,256);
+		else
+			memcpy(b_gw_cert,recvbuf+9,len-25);
 		/*wr_len=0;
 		while(len)
 		{
@@ -241,6 +267,7 @@ int16_t Sym5(uint8_t *recvbuf,uint8_t *sendbuf,uint16_t len)
 	
 	if(Word_Long(recvbuf+5)==(Trans_Counter+1))
 	{
+		
 		sendbuf[0] = 0x85;
 		Trans_Counter+=2;
 		Long_Word(sendbuf+5,Trans_Counter);
@@ -263,10 +290,12 @@ int16_t CmSym(uint8_t *recvbuf,uint8_t *sendbuf,uint16_t len)
 {
 	int16_t ret;
 	uint8_t mac[16];
+	uint8_t *keytext;
 	//uint8_t Kmac[16];
 	//uint8_t Lmac[16];
 	uint32_t Len;
 	Len = Word_Long(recvbuf+5);
+	keytext=GetMKey();
 	/*switch(recvbuf[0])
 	{
 		case 1:

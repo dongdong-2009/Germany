@@ -29,13 +29,21 @@ void fnDl645MainClock_Init( void )
 	//SYSCTL->MOD0_EN = 0x0b54;
 	//SYSCTL->MOD0_EN = 0x0b5c;
 	//SYSCTL->MOD1_EN = 0x0fe0;
-	
+#if 0	
 	SYSCTL->MOD0_EN = (1<<8)|(1<<4)|(1<<3)|(1<<2);
 	SYSCTL->MOD0_EN |= (1<<7);
 //	SYSCTL->MOD0_EN = (1<<8)|(1<<3)|(1<<2);
 	SYSCTL->MOD1_EN = (1<<10)|(1<<9)|(1<<5);
 	//SYSCTL->MOD1_EN = (1<<9)|(1<<5);
 	SYSCTL->MOD1_EN |=(1<<4) | (1<<0);
+#else
+	SYSCTL->MOD0_EN = (1<<4)|(1<<3)|(1<<2);
+	SYSCTL->MOD0_EN |= (1<<7)|(1<<9);
+//	SYSCTL->MOD0_EN = (1<<8)|(1<<3)|(1<<2);
+	SYSCTL->MOD1_EN = (1<<10)|(1<<9)|(1<<5);
+	//SYSCTL->MOD1_EN = (1<<9)|(1<<5);
+	SYSCTL->MOD1_EN |=(1<<4) | (1<<0);
+#endif	
 //	SYSCTL->INTC_EN = 0x01ff;
 	SYSCTL->KBI_EN = 0x0000;
 	SYSCTL->SYS_RST = 0x0000;   
