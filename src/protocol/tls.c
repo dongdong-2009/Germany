@@ -303,7 +303,7 @@ void Cm_Make_Public_Key(void)
 }
 
 const uint8_t initKey[16]={0xA4,0x45,0x7D,0x73,0xF3,0xA8,0xED,0x56,0xB7,0x22,0x68,0xD9,0xB5,0x23,0x0F,0x7A};
-
+//const uint8_t initKey[16]={0x88,0x1e,0xa0,0x8c,0x49,0x5f,0x18,0x9d,0xcb,0x8e,0xfb,0x15,0xe6,0x15,0x90,0xfc};
 void ResetCryto(void)
 {
 	uint8_t *b_lmn_cert; 
@@ -316,13 +316,27 @@ void ResetCryto(void)
 		m_tlscontext.crypto_created=0;
 	}
 }
+#define __TLS_MAX_KEY_EXPANSION_SIZE 192
+uint8_t sign_out[__TLS_MAX_KEY_EXPANSION_SIZE];
+extern uint8_t Z1_M[16];
+void Generate_New_Key(void)
+{
+	if(m_tlscontext.tls_sml)
+	{
+		AES_CMAC(m_tlscontext.aes_key,Z1_M,16,sign_out+16);
+		memcpy(m_tlscontext.aes_key,sign_out+16,16);
+	}
+}
 uint8_t *GetMKey(void)
 {
 	return m_tlscontext.aes_key;
 }
 void SetKeyTime(int timesec)
 {
-	m_tlscontext.crypto_time=timesec;
+	if(!m_tlscontext.tls_sml)
+	{
+		m_tlscontext.crypto_time=timesec;
+	}
 }
 void Close_tls(void)
 {
@@ -397,8 +411,7 @@ uint64_t htonll(uint64_t x)
 	return x;
 }
 //uint8_t tmp[64 + 64 + 128];
-#define __TLS_MAX_KEY_EXPANSION_SIZE 192
-uint8_t sign_out[__TLS_MAX_KEY_EXPANSION_SIZE];
+
 #if 0
 uint8_t ecc256_r1_p[32]={0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
@@ -588,12 +601,16 @@ int tls_Init(void)
 		E2P_RData(m_tlscontext.ecc_priv,E2P_PrivateKey,32);
 		uECC_compute_public_key(m_tlscontext.ecc_priv,(uint8_t *)publicK,p_curve);
 		Cm_Make_Public_Key();
+		E2P_RData(b_lmn_cert,E2P_LMN_Certi,500);
+		b_lmn_cert=Get_SMGW_Cert();
+		E2P_RData(b_lmn_cert,E2P_SMGW_Certi,500);
+		
 #endif		
 		fnWDT_Restart();
 		m_tlscontext.sha256_init=0;
 		m_tlscontext.crypto_created=0;
 		m_tlscontext.tls_sml=0;
-#if 1	
+#if 0	
 		__private_tls_prf(&m_tlscontext,publicK,48,cl_random,32,srv_random,32,compress_test,33,decompress_test,64);
 		fnWDT_Restart();
 		__private_tls_update_hash(&m_tlscontext,cl_random,32);
@@ -1445,7 +1462,7 @@ int tls_parse_message(struct TLSContext *context, unsigned char *buf, int buf_le
 {
 	unsigned char type;
 //	unsigned char *pt = 0;
-	unsigned char padding;
+	unsigned int padding;
 	int buf_pos;
 	unsigned char *ptr;
 	int payload_res;
@@ -1521,7 +1538,7 @@ int tls_parse_message(struct TLSContext *context, unsigned char *buf, int buf_le
 				case TLS_CHANGE_CIPHER:
 					  context->crypto_created=1;
 						context->remote_sequence_number=0;
-						context->crypto_time = 120;
+					//	context->crypto_time = 120;
 						break;
 				case TLS_HANDSHAKE:
             payload_res = tls_parse_payload(context, ptr, length, back_fun);
@@ -1563,9 +1580,9 @@ int tls_parse_message(struct TLSContext *context, unsigned char *buf, int buf_le
 	}
 	return payload_res;
 }
-int16_t  Cm_Tls_Analys(uint8_t *buf,uint16_t len,uint8_t *back,Hdlc_back_function *back_fun)
+uint16_t  Cm_Tls_Analys(uint8_t *buf,uint16_t len,uint8_t *back,Hdlc_back_function *back_fun)
 {
-	int16_t ret;
+	uint16_t ret;
 	m_tlscontext.message_buffer=back;
 	m_tlscontext.message_buffer_len=0;
 	tls_parse_message(&m_tlscontext,buf,len,back_fun);

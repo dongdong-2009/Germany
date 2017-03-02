@@ -34,7 +34,10 @@ void Cm_Ram_Inter(uint8_t *buf,uint16_t Len);
 		buf[Len-1-i]=tmp;
 	}
 }*/
-
+/*uint8_t  data_sign_pri[32]={0x9D,0xEB,0xC6,0xDE,0x97,0x57,0xDE,0x9D,0x99,0x4E,0x45,0xFC,0xD8,0x5D,0x47,0x62,
+0xB0,0x28,0xFC,0x24,0x0D,0x14,0xA5,0xA0,0x2A,0x35,0x00,0x6E,0x59,0xDC,0xFD,0x07};*/
+uint8_t  data_sign_pri[32]={0x07,0xFD,0xDC,0x59,0x6E,0x00,0x35,0x2A,0xA0,0xA5,0x14,0x0D,0x24,0xFC,0x28,0xB0,
+0x62,0x47,0x5D,0xD8,0xFC,0x45,0x4E,0x99,0x9D,0xDE,0x57,0x97,0xDE,0xC6,0xEB,0x9D};
 void Signature_Measure(void)
 {
 	//uint8_t privateK[32];
@@ -43,7 +46,8 @@ void Signature_Measure(void)
 	if(signature_flag[0] || signature_flag[1])
 	{	
 		//E2P_RData(privateK,E2P_PrivateKey,32);
-		privateK=Cm_Get_ECC_Addr();
+		//privateK=Cm_Get_ECC_Addr();
+		privateK=data_sign_pri;
 		memset(sign_buf,0,100);
 		E2P_RData(sign_buf,Server_ID,10);
 	}
@@ -58,8 +62,9 @@ void Signature_Measure(void)
 		Cm_Ram_Inter(sign_buf+14,4);
 		memcpy(&m_Mesure.capture_time,sign_buf+14,4);
 	
-		E2P_RData(sign_buf+18,E2P_SATEWORD,4);
-		Cm_Ram_Inter(sign_buf+18,4);
+		//E2P_RData(sign_buf+18,E2P_SATEWORD,4);
+		memcpy(sign_buf+18,&Para.meter_sts,4);
+		//Cm_Ram_Inter(sign_buf+18,4);
 		memcpy(&m_Mesure.sts,sign_buf+18,4);
 		sign_buf[22]=0x01,sign_buf[23]=0x0,sign_buf[24]=0x1,sign_buf[25]=0x08,sign_buf[26]=0x0,sign_buf[27]=0xff,
 		sign_buf[28]=00,sign_buf[29]=Unit_Wh;
@@ -82,8 +87,9 @@ void Signature_Measure(void)
 	Cm_Ram_Inter(sign_buf+14,4);
 	memcpy(&m_Mesure_n.capture_time,sign_buf+14,4);
 	
-	E2P_RData(sign_buf+18,E2P_SATEWORD,4);
-	Cm_Ram_Inter(sign_buf+18,4);
+//	E2P_RData(sign_buf+18,E2P_SATEWORD,4);
+	memcpy(sign_buf+18,&Para.meter_sts,4);
+//	Cm_Ram_Inter(sign_buf+18,4);
 	memcpy(&m_Mesure_n.sts,sign_buf+18,4);
 	sign_buf[22]=0x01,sign_buf[23]=0x0,sign_buf[24]=0x2,sign_buf[25]=0x08,sign_buf[26]=0x0,sign_buf[27]=0xff,
 	sign_buf[28]=00,sign_buf[29]=Unit_Wh;
@@ -115,12 +121,16 @@ uint8_t SetMKey(uint16_t Flag)
 	uint8_t *keytext;
 	if(Flag==SetPropP_Res)
 	{
+#if 0		
 		keytext=GetMKey();
 		/*E2P_RData(sign_buf,E2P_SymmetricalKey,16);
 		AES_CMAC(keytext,sign_buf,16,sign_buf+16);*/
 		AES_CMAC(keytext,Z1_M,16,sign_buf+16);
 		memcpy(keytext,sign_buf+16,16);
 		SetKeyTime(120);
+#else
+	Generate_New_Key();		
+#endif		
 	}
 	return ReturnOK;
 }
@@ -154,26 +164,28 @@ uint8_t Get_Certificate(uint16_t Flag)
 			{
 				rd_len=Get_LMN_Cert_Len(b_lmn_cert+4,rd_len);
 			}
+			
 			if(rd_len<15)
 			{
-				SMLComm.SendBuf[SMLComm.SendPtr-1]=rd_len;
+				SMLComm.SendBuf[SMLComm.SendPtr++]=rd_len;
 			}
 			else if(rd_len<253)
 			{
-				SMLComm.SendBuf[SMLComm.SendPtr-1]=0x80|(((rd_len+2)>>4)&0xf);
-				SMLComm.SendBuf[SMLComm.SendPtr]=((rd_len+2)&0xf);
-				SMLComm.SendPtr++;
+				SMLComm.SendBuf[SMLComm.SendPtr++]=0x80|(((rd_len+2+4)>>4)&0xf);
+				SMLComm.SendBuf[SMLComm.SendPtr++]=((rd_len+2+4)&0xf);
+				//SMLComm.SendPtr++;
 			}
 			else
 			{
-				SMLComm.SendBuf[SMLComm.SendPtr-1]=0x80|(((rd_len+3)>>8)&0xf);
-				SMLComm.SendBuf[SMLComm.SendPtr]=0x80|(((rd_len+3)>>4)&0xf);
-				SMLComm.SendBuf[++SMLComm.SendPtr]=((rd_len+3)&0xf);
-				SMLComm.SendPtr++;
+				rd_len=296;
+				SMLComm.SendBuf[SMLComm.SendPtr++]=0x80|(((rd_len+3+4)>>8)&0xf);
+				SMLComm.SendBuf[SMLComm.SendPtr++]=0x80|(((rd_len+3+4)>>4)&0xf);
+				SMLComm.SendBuf[SMLComm.SendPtr++]=((rd_len+3+4)&0xf);
+				//SMLComm.SendPtr++;
 			}
-			memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],b_lmn_cert,rd_len);
-			SMLComm.SendPtr+=rd_len;
-			SMLComm.SendBuf[++SMLComm.SendPtr]=0x01;
+			memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],b_lmn_cert,rd_len+4);
+			SMLComm.SendPtr+=rd_len+4;
+			SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
 		}
 	}
 	return ReturnOK;
@@ -478,6 +490,7 @@ uint8_t GetU_L3(unsigned char *input,unsigned char *output)
 	{
 		return ReturnERR03;
 	}
+	memset(output,0,8);
 	memcpy(output+4,&Para.Uc,4);
 	Cm_Ram_Inter(output+4,4);
 	return ReturnOK;

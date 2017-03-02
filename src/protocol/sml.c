@@ -1895,8 +1895,11 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
 	}
   switch(State & 0x00FF)
   {
+		case RAM_INTER_TYPE:
+			RAM_WriteInter(&(SMLComm.SendBuf[++SMLComm.SendPtr]),(uint8_t*)Adder,Len);
+			break;
 		case RAM_TYPE:
-			RAM_Write_Dev(&(SMLComm.SendBuf[++SMLComm.SendPtr]),(uint8_t*)Adder,Len);
+			RAM_Write(&(SMLComm.SendBuf[++SMLComm.SendPtr]),(uint8_t*)Adder,Len);
 			break;
 		case E2P_TYPE:
 			E2P_RData(&SMLComm.SendBuf[++SMLComm.SendPtr],Adder,Len);
@@ -2212,8 +2215,11 @@ uint8_t DoProSOBIS(uint8_t OBISNo)
 #endif  
   switch(State & 0x00FF)
   {	
+		case RAM_INTER_TYPE:
+			RAM_WriteInter((unsigned char*)Adder,&(SMLComm.RecBuf[TempAdd+1]),Len);
+			break;
 		case RAM_TYPE:
-			RAM_Write_Dev((unsigned char*)Adder,&(SMLComm.RecBuf[TempAdd+1]),Len);
+			RAM_Write((unsigned char*)Adder,&(SMLComm.RecBuf[TempAdd+1]),Len);
 			break;
 		case E2P_TYPE:
 			E2P_WData(Adder,&(SMLComm.RecBuf[TempAdd+1]),Len);

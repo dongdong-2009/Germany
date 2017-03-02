@@ -80,6 +80,7 @@ void AES_CMAC ( unsigned char *key, unsigned char *input, int length,
       unsigned char       X[16],Y[16], M_last[16], padded[16];
       unsigned char       K1[16], K2[16];
       int         n, i, flag;
+			fnWDT_Restart();
      // generate_subkey(key,K1,K2);
 			m_SubKeyGenerate(key,K1,K2);
       n = (length+15) / 16;       /* n is number of rounds */
@@ -164,14 +165,16 @@ void AES_128(uint8_t * pkey,uint8_t *input,uint8_t *output)
 		output[(3-i)*4+1] = (AES_ENC->CT[i]>>16)&0xff;	
 		output[(3-i)*4] = (AES_ENC->CT[i]>>24)&0xff;					
 	}
+	AES_ENC->CTL=0;
+	AES_ENC->CTL=0;
 }
-int16_t CmEnAES128(uint8_t * pkey,uint8_t *iv,uint8_t *pOutTag,uint8_t *data,uint16_t len,uint8_t *pOutCiphertext)
+uint16_t CmEnAES128(uint8_t * pkey,uint8_t *iv,uint8_t *pOutTag,uint8_t *data,uint16_t len,uint8_t *pOutCiphertext)
 {
-	int16_t ret;
+	uint16_t ret;
 	uint8_t i,k,b_padding;
-	int16_t j,pcipher;
+	uint16_t j,pcipher;
 	uint32_t tmp_cix;
- 
+	fnWDT_Restart();
 	AES_ENC->CTL=0;
 	AES_ENC->CTL=0;
 	pcipher=0;
@@ -283,17 +286,20 @@ int16_t CmEnAES128(uint8_t * pkey,uint8_t *iv,uint8_t *pOutTag,uint8_t *data,uin
 		}
 	}
 	ret=pcipher;
+	AES_ENC->CTL=0;
+	AES_ENC->CTL=0;
+	fnWDT_Restart();
 	return ret;
 }
 
 
-int16_t CmDeAES128(uint8_t * pkey,uint8_t *iv,uint8_t *pOutTag,uint8_t *data,uint16_t len,uint8_t *ptx)
+uint16_t CmDeAES128(uint8_t * pkey,uint8_t *iv,uint8_t *pOutTag,uint8_t *data,uint16_t len,uint8_t *ptx)
 {
-	int16_t ret;
+	uint16_t ret;
 	uint8_t i,k;
 	int16_t j,pcipher;
 	uint32_t tmp_cix;
-
+	fnWDT_Restart();
 	AES_DEC->CTRL=0;
 	AES_DEC->CTRL=0;
 	pcipher=0;
@@ -310,6 +316,7 @@ int16_t CmDeAES128(uint8_t * pkey,uint8_t *iv,uint8_t *pOutTag,uint8_t *data,uin
 		else
 			AES_DEC->KEY2[i] = 0;
   } 
+#if 1	
   for (i = 0; i < 4; i ++) 
 	{
 		if(iv)
@@ -322,12 +329,15 @@ int16_t CmDeAES128(uint8_t * pkey,uint8_t *iv,uint8_t *pOutTag,uint8_t *data,uin
 		else
 			tmp_cix=0;
     AES_DEC->IV[3-i] = tmp_cix;
-  }	
- // while(((AES_DEC->STAT) & 2) != 0)
-	//		WDT->EN = 0xbb;
+  }
+#endif	
+	ret=0;
+  while((((AES_DEC->STAT) & 2) != 0) && ++ret<10000)
+			WDT->EN = 0xbb;
 
 	AES_DEC->CTRL = (1<<4)| 0x3;//CBC
 	//AES_DEC->CTRL = 0x3;//EBC
+#if 0	
 	for (i = 0; i < 4; i ++) 
 	{
 		if(iv)
@@ -341,6 +351,7 @@ int16_t CmDeAES128(uint8_t * pkey,uint8_t *iv,uint8_t *pOutTag,uint8_t *data,uin
 			tmp_cix=0;
     AES_DEC->IV[3-i] = tmp_cix;
   }	
+#endif	
 	for(j=0;j<len;)
 	{
 		if(j>0)
@@ -365,7 +376,9 @@ int16_t CmDeAES128(uint8_t * pkey,uint8_t *iv,uint8_t *pOutTag,uint8_t *data,uin
 		
 		SystemDelay(5);
 		while((AES_DEC->STAT&0x1)==0x0)
-			WDT->EN = 0xbb;
+		{
+			SystemDelay(1);
+		}
 		if(ptx)
 		{
 			for (i = 0; i < 4; i ++) 
@@ -388,6 +401,21 @@ int16_t CmDeAES128(uint8_t * pkey,uint8_t *iv,uint8_t *pOutTag,uint8_t *data,uin
 		}
 	}
 	ret=pcipher;
+	AES_DEC->CTRL=0;
+	AES_DEC->CTRL=0;
+	for (i = 0; i < 4; i ++) 
+	{
+    AES_DEC->IV[3-i] = 0;
+  }
+	for (i = 0; i < 4; i ++) 
+	{
+    AES_DEC->PT[3-i]=0;
+  }
+	for (i = 0; i < 4; i ++) 
+	{
+    AES_DEC->CT[3-i]=0;
+  }
+	fnWDT_Restart();
 	return ret;
 }
 
@@ -396,6 +424,7 @@ void CM_Mess2020_Key_Calculate(uint8_t *mk,uint8_t type,uint32_t C,uint8_t *m_Id
 	uint8_t message[32];
 	int i;
 	message[0] = type;
+	fnWDT_Restart();
 	for(i=0;i<4;++i)
 	{
 		//message[i+1] = (C >> (i*8))&0xff;

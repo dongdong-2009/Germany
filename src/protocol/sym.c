@@ -9,7 +9,7 @@
 
 
 //static uint32_t  Trans_Counter=0x0164;
-static uint32_t  Trans_Counter=0x0166;
+static uint32_t  Trans_Counter=0x0170;
 //static uint32_t  Trans_Counter=0x016e;
 //static uint32_t  Trans_Counter=0x0174;
 //uint8_t keytext[16]={0x01,0x23,0x45,0x67,0x89,0xAB,0xCD,0xEF,0x01,0x23,0x45,0x67,0x89,0xAB,0xCD,0xEF};
@@ -200,7 +200,7 @@ int16_t Sym3(uint8_t *recvbuf,uint8_t *sendbuf,uint16_t len)
 			}
 			E2P_WData( E2P_PrivateKey,ecc_addr,32);
 			Cm_Make_Public_Key();
-		//	E2P_WData( E2P_LMN_Certi,recvbuf+9,len-25);
+			E2P_WData( E2P_LMN_Certi,recvbuf+9,ret+4);
 		}
 	//	else
 		//	return 0;
@@ -240,6 +240,7 @@ int16_t Sym4(uint8_t *recvbuf,uint8_t *sendbuf,uint16_t len)
 			memcpy(b_gw_cert,recvbuf+9,256);
 		else
 			memcpy(b_gw_cert,recvbuf+9,len-25);
+		E2P_WData( E2P_SMGW_Certi,recvbuf+9,len-25);
 		/*wr_len=0;
 		while(len)
 		{

@@ -42,17 +42,17 @@ void run_test(void)
 	}
 	#endif
 }
-#if 0
+#if 1
 uint8_t buf[256];
 void serial_test(void)
 {
 
 	uint16_t i;
-	for(i=0;i<256;++i)
+	for(i=0;i<32;++i)
 	{
-		buf[i]=0xaa;
+		buf[i]=i;
 	}
-	Serial_Write(buf,200);
+	Serial_Write(1,buf,10);
 	//CmGprs_Write(buf,32);
 	//Serial_Read(buf,512);
 	// CM_HDLC_Receive();
@@ -76,6 +76,7 @@ void ProcSec(void)
 	uint64_t m_me;
 	uint8_t *m_malloc_buf;
 	Flag.Clk &= ~F_Sec;
+//	serial_test();
 #if 0	
 	E2P_RData(&m_me,CMon_EC_Pp0,8);
 	Cm_Ram_Inter((uint8_t *)&m_me,8);
@@ -574,7 +575,8 @@ int  main ( void )
 	//DataFlash_Write1(4096,test_message+32,32);
 	//Read_DataFlash(test_message,4096,32);
 	//SX127x_init();
-	fnUSART5_Init(0xe0);
+//	fnUSART5_Init(0xe0);
+	Serial_Open(1,9600,7,SERIAL_CHECK_EVEN);
 	while(1)
 	{
 		fnWDT_Restart();
