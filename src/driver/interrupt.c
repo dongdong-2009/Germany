@@ -22,6 +22,7 @@
 #include "Display.h"
 extern uint32_t gprs_ms;
 extern uint32_t ms_count;
+extern uint32_t sml_tx_rx_time;
 void TC1_HANDLER(void)    //0.5ms
 {
 	TC1->STA = 0x0f;
@@ -36,6 +37,10 @@ void TC0_HANDLER(void)    //系统主节拍.1ms
 		gprs_ms--;
 	//	if(gprs_ms==0)
 		//	DMA->C0CTRL |= 1;
+	}
+	if(sml_tx_rx_time)
+	{
+		sml_tx_rx_time--;
 	}
 	if(Comm8213.CommDly != 0)
 		Comm8213.CommDly--; 	

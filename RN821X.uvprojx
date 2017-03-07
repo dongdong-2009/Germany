@@ -309,7 +309,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>4</Optim>
+            <Optim>3</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>0</OneElfS>
@@ -438,11 +438,6 @@
               <FileType>4</FileType>
               <FilePath>.\lib\rn821x_sysctrl.lib</FilePath>
             </File>
-            <File>
-              <FileName>Uart_LIB.lib</FileName>
-              <FileType>4</FileType>
-              <FilePath>.\lib\Uart_LIB.lib</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
@@ -487,6 +482,11 @@
               <FileName>startup_RN821x.s</FileName>
               <FileType>2</FileType>
               <FilePath>.\src\startup_RN821x.s</FilePath>
+            </File>
+            <File>
+              <FileName>serial.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\serial.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -567,6 +567,11 @@
               <FileName>iec1107.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\protocol\iec1107.c</FilePath>
+            </File>
+            <File>
+              <FileName>sml_cl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\protocol\sml_cl.c</FilePath>
             </File>
           </Files>
         </Group>
