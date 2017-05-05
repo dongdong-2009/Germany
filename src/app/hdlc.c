@@ -111,7 +111,7 @@ void InitServerId(void)
 	memcpy(m_lmn_info.b_sensor_identification,m_lmn_info.b_sub_identification,9);
 #endif	
 	m_lmn_info.b_sensor_identification[9]=0x18;
-	m_lmn_info.b_hdlc_LMN_Addr=3;
+	m_lmn_info.b_hdlc_LMN_Addr=2;
 	i_Meter_Addr = 68;
 	m_lmn_info.b_hdlc_slot = 1;
 	//E2P_WData(E2P_Manufactor_ID,"STC",3);
