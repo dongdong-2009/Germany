@@ -195,7 +195,22 @@ void fnTarget_Init(void)
 #if 0	
 	fnLcd_Init();
 	fnLcd_ClrScr();
-#endif		
+#endif	
+	
+	NVIC_SetPriority(UART0_IRQn,0);
+	NVIC_SetPriority(NonMaskableInt_IRQn,1);
+	NVIC_SetPriority(HardFault_IRQn,1);
+	NVIC_SetPriority(SVCall_IRQn,1);
+	NVIC_SetPriority(PendSV_IRQn,1);
+	NVIC_SetPriority(HardFault_IRQn,1);
+	NVIC_SetPriority(SysTick_IRQn,1);
+	NVIC_SetPriority(RTC_IRQn,1);
+	NVIC_SetPriority(UART5_IRQn,2);
+	NVIC_SetPriority(WDT_IRQn,1);
+	NVIC_SetPriority(LCD_IRQn,3);
+	NVIC_SetPriority(TC0_IRQn,2);
+	NVIC_SetPriority(NVM_IRQn,1);
+	
 	NVIC_EnableIRQ(UART0_IRQn);
 	NVIC_EnableIRQ(UART1_IRQn);
 	NVIC_EnableIRQ(UART3_IRQn);
