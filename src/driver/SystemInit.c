@@ -205,7 +205,7 @@ void fnTarget_Init(void)
 	NVIC_SetPriority(HardFault_IRQn,1);
 	NVIC_SetPriority(SysTick_IRQn,1);
 	NVIC_SetPriority(RTC_IRQn,1);
-	NVIC_SetPriority(UART5_IRQn,2);
+	NVIC_SetPriority(UART5_IRQn,1);
 	NVIC_SetPriority(WDT_IRQn,1);
 	NVIC_SetPriority(LCD_IRQn,3);
 	NVIC_SetPriority(TC0_IRQn,2);

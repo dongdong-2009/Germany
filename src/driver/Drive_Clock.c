@@ -8,8 +8,10 @@ void fnDl645MainClock_Init( void )
 	uint32_t bsts;
 	SYSCTL->SYS_PS = 0x82;
 	//bsts=SysModeChg(2,1);//3	//3.6864Mhz
-	if(SYS_CLK==SYS_CLK_29M)
+	if((SYS_CLK==SYS_CLK_29M) || (SYS_CLK==SYS_CLK_14M))
+	{
 		SYSCTL->OSC_CTRL2 = 0x00000013; //Íâ²¿¾§Õñ£¬f=29.4912MHz
+	}
 
 	SystemDelay(100);
 	if(SYS_CLK==SYS_CLK_3M)
@@ -20,6 +22,10 @@ void fnDl645MainClock_Init( void )
 	{	
 		bsts=SysModeChg(3,0);
 	} 
+	else if(SYS_CLK==SYS_CLK_14M)	
+	{
+		bsts=SysModeChg(3,1);
+	}
 	else
 	{
 		bsts=SysModeChg(2,1);

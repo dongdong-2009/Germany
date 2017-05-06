@@ -667,6 +667,15 @@ void RTC_HANDLER(void)
 			Flag.Clk |= F_HalfSec;	//V1001							//PWMD		
 			Flag.Disk |= F_KeyInt;	
 		}
+		if(Comm.BTime2)
+		{
+			Comm.BTime2--;
+			if(Comm.BTime2==0)
+			{
+extern uint8_t ieccmd_ptr;				
+				ieccmd_ptr=0;
+			}
+		}
 	}
 	RTC->IF = 0xff;
 }

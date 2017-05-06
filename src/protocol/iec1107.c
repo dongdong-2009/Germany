@@ -7,7 +7,8 @@
 #define IEC1107_READ(buf,len) Serial_Read(1,buf,len)
 #define IEC1107_WRITE(buf,len) (Serial_Write(1,buf,len))
 #define IEC1107_STATUS				Serial_Status(1)
-uint8_t iec1107_buf[64];
+uint8_t iec1107_buf[128];
+uint8_t iec1107_sendbuf[64];
 uint8_t iec1107_buf_pos;
 struct iec1107_s
 {
@@ -15,9 +16,11 @@ struct iec1107_s
 	uint32_t ramaddr; 
 	uint8_t deci;
 };
-#define IEC1107_TABLE_NUM    17
+uint8_t ieccmd_ptr;
+#define IEC1107_TABLE_NUM    18
 struct iec1107_s iec1107_table[IEC1107_TABLE_NUM]=
 {
+	"96.1.0",(uint32_t)&Para.servrid,16,
 	"0.0.0",(uint32_t)&Para.servrid,16,
 	"1.8.0",(uint32_t)&Para.Pp0,10,
 	"2.8.0",(uint32_t)&Para.Pn0,10,
@@ -63,26 +66,59 @@ uint64_t strtoint(uint8_t *buf,uint8_t len,uint8_t deci)
 	return ret;
 }
 extern struct S_Hdlc_LMN_Info m_lmn_info;
+void iec1107_write(void)
+{
+	switch(ieccmd_ptr)
+	{
+		case 0:
+			Serial_Open(1,300,7,SERIAL_CHECK_EVEN);
+			memcpy(iec1107_sendbuf,"/?!",3);
+		  iec1107_sendbuf[3]=0x0d;
+		  iec1107_sendbuf[4]=0x0a;
+			IEC1107_WRITE(iec1107_sendbuf,5);
+			ieccmd_ptr++;
+			Comm.BTime2=60;
+			break;
+		case 1:
+			iec1107_sendbuf[0]=0x06;
+		  iec1107_sendbuf[1]=0x30;
+			iec1107_sendbuf[2]=0x30;
+			iec1107_sendbuf[3]=0x30;
+			iec1107_sendbuf[4]=0x0d;
+		  iec1107_sendbuf[5]=0x0a;
+			ieccmd_ptr++;
+			IEC1107_WRITE(iec1107_sendbuf,6);
+			Comm.BTime2=42;
+		  break;
+		default:
+			ieccmd_ptr++;
+			Comm.BTime2=128;
+			//Serial_Open(1,9600,7,SERIAL_CHECK_EVEN);
+			break;
+	}
+}
 void iec1107_read(void)
 {
-	uint8_t len,pos,i,j,k,p;
+	uint8_t len,pos,i,j,k,p,kk;
 	uint64_t tmp;
-	if(iec1107_buf_pos>60)
+	if(iec1107_buf_pos>120)
 		iec1107_buf_pos=0;
-	len=IEC1107_READ(iec1107_buf+iec1107_buf_pos,64-iec1107_buf_pos);
+	len=IEC1107_READ(iec1107_buf+iec1107_buf_pos,128-iec1107_buf_pos);
 	if(len)
 	{
 		len +=iec1107_buf_pos;
 		for(i=0;i<len && (len-i)>5;)
 		{
-			if(iec1107_buf[i]==0x0d && iec1107_buf[i+1]==0x0a)  //找到开头的
+		//	if((iec1107_buf[i]==0x0d && iec1107_buf[i+1]==0x0a) || (iec1107_buf[i]==0x02))  //找到开头的
 			{
 				
 				//if(iec1107_buf[i+2]==0x0d && iec1107_buf[i+3]==0x0a)
-				while(iec1107_buf[i+2]==0x0d && iec1107_buf[i+3]==0x0a)
+				/*while(iec1107_buf[i+2]==0x0d && iec1107_buf[i+3]==0x0a)
 				{
 					i+=2;
-				}
+					if(i>=len)
+						break;
+				}*/
 				for(j=i+6;j<len;)
 				{
 					if(iec1107_buf[j]==0x0d && iec1107_buf[j+1]==0x0a)  //找到结尾的
@@ -116,10 +152,16 @@ void iec1107_read(void)
 					}
 					//iec1107_buf_pos+=j+1;
 					if(k>=j)
-						break;
+					{
+						i=j+2;
+						continue;
+						//break;
+					}
 					for(p=0;p<IEC1107_TABLE_NUM;++p)
 					{
-						if(!memcmp(iec1107_table[p].iec1107_code,iec1107_buf+i+2,k-(i+2)))
+						if(iec1107_buf[i]==0x02)
+							i++;
+						if(!memcmp(iec1107_table[p].iec1107_code,iec1107_buf+i,k-(i)))
 						{
 							switch(p)
 							{
@@ -141,23 +183,43 @@ void iec1107_read(void)
 							break;
 						}
 					}
-					i +=(j);
+					i +=(j+2);
 				}
 			}
-			else
+			/*else
 			{
 				++i;
-			}
+			}*/
 		}
 		if(len>i)
 		{	
 			memcpy(iec1107_buf,iec1107_buf+i,len-i);
 			iec1107_buf_pos=len-i;
+			for(i=0;i<iec1107_buf_pos;++i)
+			{
+				if(iec1107_buf[i]==ETX)
+				{
+					iec1107_buf_pos=0;
+					ieccmd_ptr=0;
+				}
+			}
 		}
 		else
 		{
 			iec1107_buf_pos=0;
 		}
+		Comm.BTime2=128;
 	}
+	else
+	{
+		if((IEC1107_STATUS==0) && (ieccmd_ptr<3) && ((Comm.BTime2<10)))
+		{
+			iec1107_write();
+		}
+		/*if(Comm.BTime2==0)
+		{
+		}*/
+	}
+	
 	return;
 }
