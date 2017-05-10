@@ -17,21 +17,27 @@ struct iec1107_s
 	uint8_t deci;
 };
 uint8_t ieccmd_ptr;
-#define IEC1107_TABLE_NUM    18
+#define IEC1107_TABLE_NUM    17
 struct iec1107_s iec1107_table[IEC1107_TABLE_NUM]=
 {
 	"96.1.0",(uint32_t)&Para.servrid,16,
-	"0.0.0",(uint32_t)&Para.servrid,16,
+	//"0.0.0",(uint32_t)&Para.servrid,16,
 	"1.8.0",(uint32_t)&Para.Pp0,10,
 	"2.8.0",(uint32_t)&Para.Pn0,10,
-	"32.07.00",(uint32_t)&Para.Ua,10,
+	/*"32.07.00",(uint32_t)&Para.Ua,10,
 	"52.07.00",(uint32_t)&Para.Ub,10,
 	"72.07.00",(uint32_t)&Para.Uc,10,
 	"31.07.00",(uint32_t)&Para.Ia,10,
 	"51.07.00",(uint32_t)&Para.Ib,10,
-	"71.07.00",(uint32_t)&Para.Ic,10,
+	"71.07.00",(uint32_t)&Para.Ic,10,*/
+	"32.7.0",(uint32_t)&Para.Ua,10,
+	"52.7.0",(uint32_t)&Para.Ub,10,
+	"72.7.0",(uint32_t)&Para.Uc,10,
+	"31.7.0",(uint32_t)&Para.Ia,10,
+	"51.7.0",(uint32_t)&Para.Ib,10,
+	"71.7.0",(uint32_t)&Para.Ic,10,
 	"16.7.0",(uint32_t)&Para.Pt,10,
-	"15.07.00",(uint32_t)&Para.Freq,10,
+	"14.7.0",(uint32_t)&Para.Freq,10,
 	"F.F",(uint32_t)&Para.meter_sts,16,
 	"1.8.00.60",(uint32_t)&Para.P0_day,10,
 	"1.8.00.61",(uint32_t)&Para.P0_week,10,
@@ -71,7 +77,7 @@ void iec1107_write(void)
 	switch(ieccmd_ptr)
 	{
 		case 0:
-			Serial_Open(1,300,7,SERIAL_CHECK_EVEN);
+			Serial_Open(1,600,7,SERIAL_CHECK_EVEN);
 			memcpy(iec1107_sendbuf,"/?!",3);
 		  iec1107_sendbuf[3]=0x0d;
 		  iec1107_sendbuf[4]=0x0a;
@@ -82,13 +88,14 @@ void iec1107_write(void)
 		case 1:
 			iec1107_sendbuf[0]=0x06;
 		  iec1107_sendbuf[1]=0x30;
-			iec1107_sendbuf[2]=0x30;
+			iec1107_sendbuf[2]=0x31;
+			//iec1107_sendbuf[2]=0x35;
 			iec1107_sendbuf[3]=0x30;
 			iec1107_sendbuf[4]=0x0d;
 		  iec1107_sendbuf[5]=0x0a;
 			ieccmd_ptr++;
 			IEC1107_WRITE(iec1107_sendbuf,6);
-			Comm.BTime2=42;
+			Comm.BTime2=45;
 		  break;
 		default:
 			ieccmd_ptr++;
@@ -101,14 +108,22 @@ void iec1107_read(void)
 {
 	uint8_t len,pos,i,j,k,p,kk;
 	uint64_t tmp;
-	if(iec1107_buf_pos>120)
+	if(iec1107_buf_pos>100)
 		iec1107_buf_pos=0;
 	len=IEC1107_READ(iec1107_buf+iec1107_buf_pos,128-iec1107_buf_pos);
 	if(len)
 	{
+		Comm.BTime2=128;
 		len +=iec1107_buf_pos;
-		for(i=0;i<len && (len-i)>5;)
+		if((iec1107_buf[len-2]!=0x0d) || (iec1107_buf[len-1]!=0x0a))
 		{
+			iec1107_buf_pos=len;
+			return;
+		}	
+#if 1		
+		for(i=0;i<len;++i)
+		{
+			WDT->EN = 0xbb;
 		//	if((iec1107_buf[i]==0x0d && iec1107_buf[i+1]==0x0a) || (iec1107_buf[i]==0x02))  //找到开头的
 			{
 				
@@ -119,17 +134,18 @@ void iec1107_read(void)
 					if(i>=len)
 						break;
 				}*/
-				for(j=i+6;j<len;)
+#if 1				
+				for(j=i+1;j<len;++j)
 				{
 					if(iec1107_buf[j]==0x0d && iec1107_buf[j+1]==0x0a)  //找到结尾的
 					{
 						break;
 					}
-					else
-					{
-						++j;
-					}
 				}
+#else
+				j=i+1;
+#endif
+			
 				if(j>=len)  //没找到结尾退出
 				{
 					break;
@@ -138,11 +154,12 @@ void iec1107_read(void)
 				{
 					if(iec1107_buf[2]=='/' || iec1107_buf[2]=='!')
 					{
-						i +=(j+2);
-						continue;
+						i +=(j+1);
+						break;
 					}
 					k=i+1;
-					while(k<j)
+#if 1					
+					while(k<j && k<len)
 					{
 						if(iec1107_buf[k]=='(')
 						{
@@ -150,17 +167,21 @@ void iec1107_read(void)
 						}
 						++k;
 					}
+#endif					
 					//iec1107_buf_pos+=j+1;
 					if(k>=j)
 					{
-						i=j+2;
+						i=j+1;
 						continue;
 						//break;
 					}
+#if 1					
 					for(p=0;p<IEC1107_TABLE_NUM;++p)
 					{
 						if(iec1107_buf[i]==0x02)
 							i++;
+						if(k<=i)
+							break;
 						if(!memcmp(iec1107_table[p].iec1107_code,iec1107_buf+i,k-(i)))
 						{
 							switch(p)
@@ -178,12 +199,12 @@ void iec1107_read(void)
 								default:
 								*(uint64_t *)iec1107_table[p].ramaddr=strtoint(iec1107_buf+k+1,j-1-k,iec1107_table[p].deci);
 								break;
-							}
-								
+							}	
 							break;
 						}
 					}
-					i +=(j+2);
+#endif					
+					i +=(j+1);
 				}
 			}
 			/*else
@@ -191,29 +212,40 @@ void iec1107_read(void)
 				++i;
 			}*/
 		}
+#else
+		i=0;
+#endif
+#if 0		
 		if(len>i)
 		{	
 			memcpy(iec1107_buf,iec1107_buf+i,len-i);
 			iec1107_buf_pos=len-i;
+#if 0			
 			for(i=0;i<iec1107_buf_pos;++i)
 			{
 				if(iec1107_buf[i]==ETX)
 				{
 					iec1107_buf_pos=0;
 					ieccmd_ptr=0;
+					break;
 				}
 			}
+#endif			
 		}
 		else
 		{
 			iec1107_buf_pos=0;
 		}
-		Comm.BTime2=128;
+#else
+	iec1107_buf_pos=0;		
+#endif		
 	}
 	else
 	{
+		
 		if((IEC1107_STATUS==0) && (ieccmd_ptr<3) && ((Comm.BTime2<10)))
 		{
+			iec1107_buf_pos=0;
 			iec1107_write();
 		}
 		/*if(Comm.BTime2==0)

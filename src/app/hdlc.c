@@ -570,8 +570,11 @@ void CM_HDLC_Receive(void)
 	#if 1 //test delete
 	if(i_rx_length==0)
 	{
+		if((ms_count>100) && i_rx_len)
+			i_rx_len=0;
 		return;
 	}
+	ms_count=0;
 	#endif
 	i_rx_len+=i_rx_length;
 	if(i_rx_len<11)

@@ -196,8 +196,8 @@ void fnTarget_Init(void)
 	fnLcd_Init();
 	fnLcd_ClrScr();
 #endif	
-	
-	NVIC_SetPriority(UART0_IRQn,0);
+#if 1	
+	NVIC_SetPriority(UART1_IRQn,0);
 	NVIC_SetPriority(NonMaskableInt_IRQn,1);
 	NVIC_SetPriority(HardFault_IRQn,1);
 	NVIC_SetPriority(SVCall_IRQn,1);
@@ -209,19 +209,22 @@ void fnTarget_Init(void)
 	NVIC_SetPriority(WDT_IRQn,1);
 	NVIC_SetPriority(LCD_IRQn,3);
 	NVIC_SetPriority(TC0_IRQn,2);
+#endif	
 	NVIC_SetPriority(NVM_IRQn,1);
 	
-	NVIC_EnableIRQ(UART0_IRQn);
+	//NVIC_EnableIRQ(UART0_IRQn);
 	NVIC_EnableIRQ(UART1_IRQn);
-	NVIC_EnableIRQ(UART3_IRQn);
+	//NVIC_EnableIRQ(UART3_IRQn);
 	NVIC_EnableIRQ(UART5_IRQn);
 	NVIC_EnableIRQ(TC0_IRQn);
-#if 0
+
 	NVIC_DisableIRQ(KBI_IRQn);
+	NVIC_DisableIRQ(VCH_IRQn);
+#if 0
 	NVIC_EnableIRQ(CMP_IRQn);
+		NVIC_EnableIRQ(VCH_IRQn);
 #endif
 //	NVIC_DisableIRQ(RTC_IRQn);	
 	NVIC_EnableIRQ(RTC_IRQn);
-	NVIC_EnableIRQ(VCH_IRQn);
 	NVIC_EnableIRQ(DMA_IRQn);
 }

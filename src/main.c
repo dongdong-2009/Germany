@@ -576,7 +576,7 @@ int  main ( void )
 	//Read_DataFlash(test_message,4096,32);
 	//SX127x_init();
 //	fnUSART5_Init(0xe0);
-	Serial_Open(1,9600,7,SERIAL_CHECK_EVEN);
+	Serial_Open(1,600,7,SERIAL_CHECK_EVEN);
 	while(1)
 	{
 		fnWDT_Restart();
