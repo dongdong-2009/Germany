@@ -576,7 +576,8 @@ int  main ( void )
 	//Read_DataFlash(test_message,4096,32);
 	//SX127x_init();
 //	fnUSART5_Init(0xe0);
-	Serial_Open(1,600,7,SERIAL_CHECK_EVEN);
+	//Serial_Open(1,600,7,SERIAL_CHECK_EVEN);
+	Serial_Open(1,9600,8,SERIAL_CHECK_NO);
 	while(1)
 	{
 		fnWDT_Restart();
@@ -591,7 +592,7 @@ int  main ( void )
 #endif
 	//	if (Flag.Clk & F_HalfSec) ProcHalfSec();
 		if (Flag.Clk & F_Sec) ProcSec();
-		if (Flag.Clk & F_Min) ProcMin();
+//		if (Flag.Clk & F_Min) ProcMin();
 	//	if (Flag.Clk & F_Hour) ProcHour();
 	//	if (Flag.Clk & F_Day) ProcDay();
 		CM_HDLC_Receive();

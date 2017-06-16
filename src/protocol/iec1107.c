@@ -20,6 +20,7 @@ uint8_t ieccmd_ptr;
 #define IEC1107_TABLE_NUM    17
 struct iec1107_s iec1107_table[IEC1107_TABLE_NUM]=
 {
+#if 0	
 	"96.1.0",(uint32_t)&Para.servrid,16,
 	//"0.0.0",(uint32_t)&Para.servrid,16,
 	"1.8.0",(uint32_t)&Para.Pp0,10,
@@ -44,6 +45,33 @@ struct iec1107_s iec1107_table[IEC1107_TABLE_NUM]=
 	"1.8.00.62",(uint32_t)&Para.P0_month,10,
 	"1.8.00.63",(uint32_t)&Para.P0_year,10,
 	"1.8.00.65",(uint32_t)&Para.P0_last,10,
+#else
+	"1-0:96.1.0*255",(uint32_t)&Para.servrid,16,
+	//"0.0.0",(uint32_t)&Para.servrid,16,
+	"1-0:1.8.0*255",(uint32_t)&Para.Pp0,10,
+	"1-0:2.8.0*255",(uint32_t)&Para.Pn0,10,
+	/*"32.07.00",(uint32_t)&Para.Ua,10,
+	"52.07.00",(uint32_t)&Para.Ub,10,
+	"72.07.00",(uint32_t)&Para.Uc,10,
+	"31.07.00",(uint32_t)&Para.Ia,10,
+	"51.07.00",(uint32_t)&Para.Ib,10,
+	"71.07.00",(uint32_t)&Para.Ic,10,*/
+	"1-0:32.7.0*255",(uint32_t)&Para.Ua,10,
+	"1-0:52.7.0*255",(uint32_t)&Para.Ub,10,
+	"1-0:72.7.0*255",(uint32_t)&Para.Uc,10,
+	"1-0:31.7.0*255",(uint32_t)&Para.Ia,10,
+	"1-0:51.7.0*255",(uint32_t)&Para.Ib,10,
+	"1-0:71.7.0*255",(uint32_t)&Para.Ic,10,
+	"1-0:16.7.0*255",(uint32_t)&Para.Pt,10,
+	"1-0:14.7.0*255",(uint32_t)&Para.Freq,10,
+	//"F.F",(uint32_t)&Para.meter_sts,16,
+	"1-0:97.97.0*255",(uint32_t)&Para.meter_sts,16,
+	"1-0:1.8.00*60",(uint32_t)&Para.P0_day,10,
+	"1-0:1.8.00*61",(uint32_t)&Para.P0_week,10,
+	"1-0:1.8.00*62",(uint32_t)&Para.P0_month,10,
+	"1-0:1.8.00*63",(uint32_t)&Para.P0_year,10,
+	"1-0:1.8.00*65",(uint32_t)&Para.P0_last,10,
+#endif
 };
 uint64_t strtoint(uint8_t *buf,uint8_t len,uint8_t deci)
 {
@@ -72,35 +100,43 @@ uint64_t strtoint(uint8_t *buf,uint8_t len,uint8_t deci)
 	return ret;
 }
 extern struct S_Hdlc_LMN_Info m_lmn_info;
+unsigned char iec_flag;
 void iec1107_write(void)
 {
 	switch(ieccmd_ptr)
 	{
 		case 0:
-			Serial_Open(1,600,7,SERIAL_CHECK_EVEN);
+		//	Serial_Open(1,9600,7,SERIAL_CHECK_EVEN);
+			Serial_Open(1,9600,8,SERIAL_CHECK_NO);
 			memcpy(iec1107_sendbuf,"/?!",3);
 		  iec1107_sendbuf[3]=0x0d;
 		  iec1107_sendbuf[4]=0x0a;
 			IEC1107_WRITE(iec1107_sendbuf,5);
 			ieccmd_ptr++;
-			Comm.BTime2=60;
+			Comm.BTime2=90;
+			iec_flag=0;
 			break;
 		case 1:
+			if(iec_flag==0)
+			{
+				ieccmd_ptr=0;
+				return;
+			}
 			iec1107_sendbuf[0]=0x06;
 		  iec1107_sendbuf[1]=0x30;
-			iec1107_sendbuf[2]=0x31;
-			//iec1107_sendbuf[2]=0x35;
+		//	iec1107_sendbuf[2]=0x31;
+			iec1107_sendbuf[2]=0x35;
 			iec1107_sendbuf[3]=0x30;
 			iec1107_sendbuf[4]=0x0d;
 		  iec1107_sendbuf[5]=0x0a;
 			ieccmd_ptr++;
 			IEC1107_WRITE(iec1107_sendbuf,6);
-			Comm.BTime2=45;
+			Comm.BTime2=90;
 		  break;
 		default:
 			ieccmd_ptr++;
 			Comm.BTime2=128;
-			//Serial_Open(1,9600,7,SERIAL_CHECK_EVEN);
+		//	Serial_Open(1,9600,7,SERIAL_CHECK_EVEN);
 			break;
 	}
 }
@@ -110,7 +146,7 @@ void iec1107_read(void)
 	uint64_t tmp;
 	if(iec1107_buf_pos>100)
 		iec1107_buf_pos=0;
-	len=IEC1107_READ(iec1107_buf+iec1107_buf_pos,128-iec1107_buf_pos);
+	len=IEC1107_READ(iec1107_buf+iec1107_buf_pos,127-iec1107_buf_pos);
 	if(len)
 	{
 		Comm.BTime2=128;
@@ -120,6 +156,10 @@ void iec1107_read(void)
 			iec1107_buf_pos=len;
 			return;
 		}	
+		if(ieccmd_ptr==1)
+		{
+			iec_flag=1;
+		}
 #if 1		
 		for(i=0;i<len;++i)
 		{
