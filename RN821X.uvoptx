@@ -117,7 +117,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
-          <Name>xM?</Name>
+          <Name>/</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -151,14 +151,14 @@
           <Type>0</Type>
           <LineNumber>1012</LineNumber>
           <EnabledFlag>0</EnabledFlag>
-          <Address>10484</Address>
+          <Address>10692</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>F:\鏈€杩戝伐浣?EON\software\BAB\RN821X\src\driver\micro-ecc\uECC.c</Filename>
+          <Filename>F:\鏈€杩戝伐浣?EON\software\BAB\RN821X-iecmaster\src\driver\micro-ecc\uECC.c</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\RN821X\src/driver/micro-ecc/uECC.c\1012</Expression>
         </Bp>
@@ -232,42 +232,42 @@
         <Ww>
           <count>13</count>
           <WinNumber>1</WinNumber>
-          <ItemText>\\RN821X\src/protocol/tls.c\m_tlscontext.client_verify_data[31]</ItemText>
+          <ItemText>m_sserial1</ItemText>
         </Ww>
         <Ww>
           <count>14</count>
           <WinNumber>1</WinNumber>
-          <ItemText>m_sserial1</ItemText>
+          <ItemText>m_sserial5</ItemText>
         </Ww>
         <Ww>
           <count>15</count>
           <WinNumber>1</WinNumber>
-          <ItemText>m_sserial5</ItemText>
+          <ItemText>buf</ItemText>
         </Ww>
         <Ww>
           <count>16</count>
           <WinNumber>1</WinNumber>
-          <ItemText>buf</ItemText>
+          <ItemText>iec1107_buf</ItemText>
         </Ww>
         <Ww>
           <count>17</count>
           <WinNumber>1</WinNumber>
-          <ItemText>iec1107_buf</ItemText>
+          <ItemText>Para</ItemText>
         </Ww>
         <Ww>
           <count>18</count>
           <WinNumber>1</WinNumber>
-          <ItemText>Para</ItemText>
+          <ItemText>m_lmn_info</ItemText>
         </Ww>
         <Ww>
           <count>19</count>
           <WinNumber>1</WinNumber>
-          <ItemText>m_lmn_info</ItemText>
+          <ItemText>Para.Uc</ItemText>
         </Ww>
         <Ww>
           <count>20</count>
           <WinNumber>1</WinNumber>
-          <ItemText>gprs_ms</ItemText>
+          <ItemText>Para.servrid</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>
@@ -311,7 +311,7 @@
         <Mm>
           <WinNumber>1</WinNumber>
           <SubType>0</SubType>
-          <ItemText>b_Hdlc_buf</ItemText>
+          <ItemText>iec1107_buf</ItemText>
           <AccSizeX>0</AccSizeX>
         </Mm>
       </MemoryWindow1>
@@ -329,7 +329,7 @@
       <DebugFlag>
         <trace>0</trace>
         <periodic>1</periodic>
-        <aLwin>1</aLwin>
+        <aLwin>0</aLwin>
         <aCover>0</aCover>
         <aSer1>0</aSer1>
         <aSer2>0</aSer2>
@@ -359,14 +359,6 @@
       <Lin2ConfigFile></Lin2ConfigFile>
       <bLin2Auto>0</bLin2Auto>
       <SystemViewers>
-        <Entry>
-          <Name>System Viewer\DMA</Name>
-          <WinId>35898</WinId>
-        </Entry>
-        <Entry>
-          <Name>System Viewer\INTC</Name>
-          <WinId>35900</WinId>
-        </Entry>
         <Entry>
           <Name>System Viewer\UART1</Name>
           <WinId>35899</WinId>
@@ -481,7 +473,7 @@
 
   <Group>
     <GroupName>lib</GroupName>
-    <tvExp>1</tvExp>
+    <tvExp>0</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>

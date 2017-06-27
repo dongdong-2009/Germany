@@ -213,7 +213,7 @@ uint8_t GetN_Signature(uint16_t Flag)
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
-		SMLComm.SendBuf[SMLComm.SendPtr++]=0x52;SMLComm.SendBuf[SMLComm.SendPtr++]=0x00;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x52;SMLComm.SendBuf[SMLComm.SendPtr++]=0xff;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=Unit_Wh;//0x1;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
 		
@@ -322,7 +322,7 @@ uint8_t GetP_Signature(uint16_t Flag)
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
-		SMLComm.SendBuf[SMLComm.SendPtr++]=0x52;SMLComm.SendBuf[SMLComm.SendPtr++]=0x00;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x52;SMLComm.SendBuf[SMLComm.SendPtr++]=0xff;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=Unit_Wh;//0x1;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
 		
@@ -570,7 +570,7 @@ uint8_t GetU_back(uint16_t Flag)
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
-		SMLComm.SendBuf[SMLComm.SendPtr++]=0x52;SMLComm.SendBuf[SMLComm.SendPtr++]=0x00;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x52;SMLComm.SendBuf[SMLComm.SendPtr++]=0xff;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=Unit_V;
 		SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
 	}
@@ -606,8 +606,77 @@ uint8_t GetS_back(uint16_t Flag)
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
-		SMLComm.SendBuf[SMLComm.SendPtr++]=0x52;SMLComm.SendBuf[SMLComm.SendPtr++]=0x00;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x52;SMLComm.SendBuf[SMLComm.SendPtr++]=0xff;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=Unit_W;
+		SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
+	}
+	return ReturnOK;
+}
+
+uint8_t GetP_back(uint16_t Flag)
+{
+	if(Flag==GetPropP_Req)
+	{
+		SMLComm.SendBuf[++SMLComm.SendPtr]=0x73;
+		++SMLComm.SendPtr;
+		RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[6].OLStartAdd]),OrderRecord[6].OLLength);//дattri
+		SMLComm.SendPtr+=OrderRecord[6].OLLength;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x03;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x52;SMLComm.SendBuf[SMLComm.SendPtr++]=0xff;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=Unit_Wh;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
+		
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x73;
+		RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[7].OLStartAdd]),OrderRecord[7].OLLength);//дattri
+		SMLComm.SendPtr+=OrderRecord[7].OLLength;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x65;
+
+			memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],&Para.meter_sts,4);
+			SMLComm.SendPtr+=4;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
+		
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x73;
+		
+		RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[8].OLStartAdd]),OrderRecord[8].OLLength);//дattri
+		SMLComm.SendPtr+=OrderRecord[7].OLLength;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x65;
+			memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],&Comm.SecPulseCnt,4);
+			Cm_Ram_Inter(&SMLComm.SendBuf[SMLComm.SendPtr],4);
+			SMLComm.SendPtr+=4;
+		SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
+	}
+	return ReturnOK;
+}
+
+uint8_t GetI_back(uint16_t Flag)
+{
+	if(Flag==GetPropP_Req)
+	{
+		SMLComm.SendBuf[++SMLComm.SendPtr]=0x73;
+		++SMLComm.SendPtr;
+		RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[6].OLStartAdd]),OrderRecord[6].OLLength);//дattri
+		SMLComm.SendPtr+=OrderRecord[6].OLLength;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x03;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x52;SMLComm.SendBuf[SMLComm.SendPtr++]=0xfc;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=Unit_A;
 		SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
 	}
 	return ReturnOK;

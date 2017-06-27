@@ -46,7 +46,7 @@ struct iec1107_s iec1107_table[IEC1107_TABLE_NUM]=
 	"1.8.00.63",(uint32_t)&Para.P0_year,10,
 	"1.8.00.65",(uint32_t)&Para.P0_last,10,
 #else
-	"1-0:96.1.0*255",(uint32_t)&Para.servrid,16,
+	"1-0:96.1.0*255",(uint32_t)&Para.servrid,10,
 	//"0.0.0",(uint32_t)&Para.servrid,16,
 	"1-0:1.8.0*255",(uint32_t)&Para.Pp0,10,
 	"1-0:2.8.0*255",(uint32_t)&Para.Pn0,10,

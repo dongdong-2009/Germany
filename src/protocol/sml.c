@@ -1,6 +1,6 @@
-#include"sml.h"
 #include"data.h"
 #include "typeE2p.h"
+#include "sml.h"
 
 SMLRECORD SMLRecord[20];
 ORDERRECORD	OrderRecord[16];
@@ -1736,7 +1736,8 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
 	TempAdd=OrderRecord[4].OLStartAdd-1;
 	
 	attri_num=SMLComm.RecBuf[TempAdd];
-	if(attri_num==0x73 || attri_num==0x76)
+	//if(attri_num==0x73 || attri_num==0x76)
+	if(attri_num==0x73 || attri_num==0x76 || attri_num==0x75)
 		SMLComm.SendBuf[SMLComm.SendPtr]=SMLComm.RecBuf[TempAdd];
 	else
 		SMLComm.SendBuf[SMLComm.SendPtr]=0x72;
@@ -1768,6 +1769,15 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
 		RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[9].OLStartAdd]),OrderRecord[9].OLLength);//дattri
 		SMLComm.SendPtr+=OrderRecord[9].OLLength;
 	}		
+	else if(attri_num==0x75)
+	{
+		RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[6].OLStartAdd]),OrderRecord[6].OLLength);//дattri
+		SMLComm.SendPtr+=OrderRecord[6].OLLength;
+		RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[7].OLStartAdd]),OrderRecord[7].OLLength);//дattri
+		SMLComm.SendPtr+=OrderRecord[7].OLLength;
+		RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[8].OLStartAdd]),OrderRecord[8].OLLength);//дattri
+		SMLComm.SendPtr+=OrderRecord[8].OLLength;
+	}
 #endif	
   SMLComm.SendBuf[SMLComm.SendPtr]=0x73;
   SMLComm.SendPtr++;
@@ -1778,7 +1788,8 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
 #if 0	
 	SMLComm.SendBuf[SMLComm.SendPtr]=0x71;
 #else
-	if(attri_num==0x73 || attri_num==0x76)
+	//if(attri_num==0x73 || attri_num==0x76)
+	if(attri_num==0x73 || attri_num==0x76 || attri_num==0x75)
 		SMLComm.SendBuf[SMLComm.SendPtr]=attri_num-1;
 	else
 		SMLComm.SendBuf[SMLComm.SendPtr]=0x71;
