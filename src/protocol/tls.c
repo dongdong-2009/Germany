@@ -314,6 +314,7 @@ void ResetCryto(void)
 	{
 		memcpy(m_tlscontext.aes_key,initKey,16);
 		m_tlscontext.crypto_created=0;
+		E2P_WData(E2P_SymmetricalKey,m_tlscontext.aes_key,16);
 	}
 }
 #define __TLS_MAX_KEY_EXPANSION_SIZE 192
@@ -325,6 +326,7 @@ void Generate_New_Key(void)
 	{
 		AES_CMAC(m_tlscontext.aes_key,Z1_M,16,sign_out+16);
 		memcpy(m_tlscontext.aes_key,sign_out+16,16);
+		E2P_WData(E2P_SymmetricalKey,m_tlscontext.aes_key,16);
 	}
 }
 uint8_t *GetMKey(void)
@@ -459,7 +461,11 @@ int tls_Init(void)
 		result = htonll(squence_number);
 //		unsigned int i;
 		b_lmn_cert=Get_LMN_Cert();
-		memcpy(m_tlscontext.aes_key,initKey,16);
+
+		E2P_RData(m_tlscontext.aes_key,E2P_SymmetricalKey,16);
+		if((m_tlscontext.aes_key[0]==0) && (m_tlscontext.aes_key[1]==0))
+			memcpy(m_tlscontext.aes_key,initKey,16);
+		
 		uECC_set_rng(ecc_rng);
 		p_curve = uECC_secp256r1();
 //		CmDeAES128(m_serverkey,m_serveriv,0,m_cipher,80,sign_out);

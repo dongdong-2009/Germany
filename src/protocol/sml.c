@@ -33,10 +33,11 @@ uint16_t CmGet_SML_Send_Buf(uint8_t *buf)
 //收到命令后的解析命令,入口:表格指针,长度,出口:长度不全返回0,出错返回-1,正确返回1//
 signed AnalyseOrder(uint16_t BufAd,uint16_t DataLg,uint8_t LayerNo)
 {
-  uint8_t i,j,Buff[15];
+  uint16_t i,j;
+	uint8_t Buff[15];
   uint16_t Ptr;
   uint8_t LayerNum,CID1bNum=0;
-  uint8_t Temp;
+  uint16_t Temp;
   uint16_t	NeedAnaLg;//需要解析的数据长度指命令里边的的一层层//
   uint16_t TempLg;
   TempLg=BufAd+DataLg;//计算出当前可以解析到的数据在BUFF中的位置//
@@ -212,7 +213,15 @@ signed AnalyseOrder(uint16_t BufAd,uint16_t DataLg,uint8_t LayerNo)
       {
         Ptr++;
         if(Ptr>TempLg) return 0;
-        NeedAnaLg=(Temp&0x0f)*16+SMLComm.RecBuf[Ptr];
+        NeedAnaLg=(Temp&0x0f)*16+(SMLComm.RecBuf[Ptr]&0xf);
+				//zzl 20170629 add 
+				if(SMLComm.RecBuf[Ptr]&0x80)
+				{
+					Ptr++;
+					NeedAnaLg=NeedAnaLg*16+(SMLComm.RecBuf[Ptr]&0xf);
+					NeedAnaLg -= 1;
+				}
+				//zzl end
         Temp=Ptr+NeedAnaLg-2;//计算出这一层数据完在接收缓冲区中的位置//
         if(Temp>TempLg) return 0;
         Ptr=Ptr+NeedAnaLg-2;//指针指向这一层的最后一字节//
@@ -388,7 +397,15 @@ signed AnalyseSMLMes(uint16_t BufAd,uint16_t DataLg,uint8_t LayerNo)
       {
         Ptr++;
         if(Ptr>TempLg) return 0;
-        NeedAnaLg=(Temp&0x0f)*16+SMLComm.RecBuf[Ptr];
+        NeedAnaLg=(Temp&0x0f)*16+(SMLComm.RecBuf[Ptr]&0xf);
+				//zzl 20170629 add 
+				if(SMLComm.RecBuf[Ptr]&0x80)
+				{
+					Ptr++;
+					NeedAnaLg=NeedAnaLg*16+(SMLComm.RecBuf[Ptr]&0xf);
+					NeedAnaLg -= 1;
+				}
+				//add end
         Temp=Ptr+NeedAnaLg-2;//计算出这一层数据完在接收缓冲区中的位置//
         if(Temp>TempLg) return 0;
         Ptr=Ptr+NeedAnaLg-2;//指针指向这一层的最后一字节//
@@ -747,16 +764,21 @@ void	OpenRes(void)
   //	SMLComm.SendPtr+=OrderRecord0100[3].OLLength;//填写Server_ID//
   SMLComm.SendPtr+=11;
   SMLComm.SendPtr++;
+	//zzl 20170629 add 
+#if 0
   SMLComm.SendBuf[SMLComm.SendPtr]=0x01;//填写Reftime//
   SMLComm.SendPtr++;
-	/*SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;//填写Reftime//
+#else	
+	SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;//填写Reftime//
 	SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;
 	SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
 	SMLComm.SendBuf[SMLComm.SendPtr++]=0x65;
-	SMLComm.SendBuf[SMLComm.SendPtr++]=0x00;
-	SMLComm.SendBuf[SMLComm.SendPtr++]=0x5b;
-	SMLComm.SendBuf[SMLComm.SendPtr++]=0x35;
-	SMLComm.SendBuf[SMLComm.SendPtr++]=0x23;*/
+	SMLComm.SendBuf[SMLComm.SendPtr++]=Comm.SecPulseCnt>>24;
+	SMLComm.SendBuf[SMLComm.SendPtr++]=Comm.SecPulseCnt>>16;
+	SMLComm.SendBuf[SMLComm.SendPtr++]=Comm.SecPulseCnt>>8;
+	SMLComm.SendBuf[SMLComm.SendPtr++]=Comm.SecPulseCnt;
+#endif	
+  //zzl add end
 	
   SMLComm.SendBuf[SMLComm.SendPtr]=0x01;//填写sml_Version//
   
@@ -1056,6 +1078,12 @@ void	GetPropPRes(void)
     ReturnSetOK(ReturnERR05);
   else if(SMLComm.WrongTypeNum == LayerNum)
     ReturnSetOK(ReturnERR05);	
+	//zzl 20170629 add 
+	else if((SMLRecord[LayerNum].GroupNo==1) || (SMLRecord[LayerNum].AbortOnError==1))
+	{
+		ReturnSetOK(ReturnERR15);
+	}
+	//zzl add end
   else{	
     ReturnNo = DoProPOBIS(OBISNo);//根据OBIS码填写数据//
     
@@ -1997,7 +2025,7 @@ uint8_t DoProSOBIS(uint8_t OBISNo)
 {
   uint16_t SecCntBuff;
   uint16_t TempAdd,TempLength,TextLen;
-  uint8_t	Len;
+  uint16_t	Len;
   uint8_t	OBISType;
   uint32_t	Adder;
   uint16_t	State;
@@ -2039,6 +2067,11 @@ uint8_t DoProSOBIS(uint8_t OBISNo)
 	{
 		TextLen=(SMLComm.RecBuf[TempAdd]&0xf)<<4;
 		TextLen=TextLen|(SMLComm.RecBuf[TempAdd+1]&0xf);
+		if(SMLComm.RecBuf[TempAdd+1]&0x80)
+		{
+			TextLen = (TextLen<<4)+(SMLComm.RecBuf[TempAdd+2]&0xf);
+			TextLen -=1;
+		}
 		TextLen-=2;
 		//TempAdd++;
 	}
@@ -2048,7 +2081,7 @@ uint8_t DoProSOBIS(uint8_t OBISNo)
 		TextLen-=1;
 	}
 	
-	if(TextLen!=Len)
+	if((TextLen!=Len) && (Len!=255))
 		return ReturnERR14;
 	
 		
@@ -2074,7 +2107,7 @@ uint8_t DoProSOBIS(uint8_t OBISNo)
       return(ReturnERR03);
       
     }
-  }else if(SMLComm.RecBuf[TempAdd] != OBISType)
+  }else if((SMLComm.RecBuf[TempAdd] != OBISType) && (Len!=255))
   {	
     if((SMLComm.RecBuf[TempAdd]  <= 9) && (OBISType == 0x0A))
     {
@@ -2090,6 +2123,11 @@ uint8_t DoProSOBIS(uint8_t OBISNo)
   }
 	if(SMLComm.RecBuf[TempAdd]&0x80)
 	{
+		if(SMLComm.RecBuf[TempAdd+1]&0x80)
+		{
+			TempAdd++;
+			Len=TextLen;
+		}
 		TempAdd++;
 	}
 //	if(SMLComm.RecBuf[TempAdd]
