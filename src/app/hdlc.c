@@ -346,8 +346,8 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 	}
 	else
 	{
-		buf[1] = 0xA0 | (((Len+9))>>8)&0x3f;
-		buf[2]=(((Len+9)))&0xff;
+		buf[1] = 0xA0;
+		buf[2]= 9;
 	}
 	buf[ptr++]= 2;
 	buf[ptr++]=(i_Meter_Prot<<1)|0x1;
@@ -497,8 +497,9 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 			buf[ptr++]=HDLC_DM;
 			break;
 		default:
-			b_seq=0x10;
-			buf[ptr++]=HDLC_DM;
+			//b_seq=0x10;
+			//buf[ptr++]=HDLC_DM;
+			buf[ptr++]=HDLC_RR|((b_seq)&0xf0);
 			break;
 	}
 	i_crc = DoCrc16(0xffff,buf+1,ptr-1);
