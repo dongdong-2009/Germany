@@ -292,6 +292,6 @@ void iec1107_read(void)
 		{
 		}*/
 	}
-	
+	Para.meter_sts |=0x4;
 	return;
 }

@@ -1928,9 +1928,16 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
 #endif
 	if(smal_callbefore)
 	{
-		ret=smal_callbefore(0,&SMLComm.SendBuf[++SMLComm.SendPtr]);
+		if((State & FUN_TYPE)==FUN_TYPE)
+		{
+			SMLComm.SendPtr++;
+		}
+		ret=smal_callbefore(0,&SMLComm.SendBuf[SMLComm.SendPtr]);
 		if(ret!=ReturnOK)
+		{
+			SMLComm.SendPtr--;
 			return ret;
+		}
 	}
   switch(State & 0x00FF)
   {
@@ -2059,9 +2066,9 @@ uint8_t DoProSOBIS(uint8_t OBISNo)
  // TempAdd=OrderRecord[9].OLStartAdd;
   //TempLength=OrderRecord[9].OLLength;
 	
-	if((SMLComm.RecBuf[TempAdd]&0x70)!=(OBISType&0x70))
+	if(((SMLComm.RecBuf[TempAdd]&0x70)!=(OBISType&0x70)) && ((PERMIT&State)!=PERMIT))
 	{
-		return ReturnERR15;
+		return ReturnERR20;
 	}
 	if(SMLComm.RecBuf[TempAdd]&0x80)
 	{
@@ -2080,10 +2087,20 @@ uint8_t DoProSOBIS(uint8_t OBISNo)
 		TextLen=(SMLComm.RecBuf[TempAdd]&0xf);
 		TextLen-=1;
 	}
+	if(((PERMIT&State)==PERMIT) && (TextLen==Len))
+		return(ReturnERR10);
+	
+	if((PERMIT&State)==PERMIT)
+	{
+		Len=TextLen;
+	}
 	
 	if((TextLen!=Len) && (Len!=255))
 		return ReturnERR14;
-	
+	if(TextLen<Len)
+	{
+		return ReturnERR14;
+	}
 		
   if((SMLComm.Flag & F_Attention_NotDoneALL) == F_Attention_NotDoneALL)
   {
@@ -2107,7 +2124,7 @@ uint8_t DoProSOBIS(uint8_t OBISNo)
       return(ReturnERR03);
       
     }
-  }else if((SMLComm.RecBuf[TempAdd] != OBISType) && (Len!=255))
+  }else if((SMLComm.RecBuf[TempAdd] != OBISType) && (Len!=255) &&  ((PERMIT&State)!=PERMIT))
   {	
     if((SMLComm.RecBuf[TempAdd]  <= 9) && (OBISType == 0x0A))
     {
@@ -2121,6 +2138,7 @@ uint8_t DoProSOBIS(uint8_t OBISNo)
     }
     
   }
+	
 	if(SMLComm.RecBuf[TempAdd]&0x80)
 	{
 		if(SMLComm.RecBuf[TempAdd+1]&0x80)
@@ -2130,6 +2148,7 @@ uint8_t DoProSOBIS(uint8_t OBISNo)
 		}
 		TempAdd++;
 	}
+	
 //	if(SMLComm.RecBuf[TempAdd]
 //  if((State & WRITE) != WRITE)
   //  return(ReturnERR03);

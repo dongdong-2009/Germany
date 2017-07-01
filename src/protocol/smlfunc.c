@@ -256,6 +256,7 @@ uint8_t GetN_Signature(uint16_t Flag)
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x80|((64+2)>>4);
 		SMLComm.SendBuf[SMLComm.SendPtr++]=((64+2))&0xf;
 			memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],m_Mesure_n.signature_val,64);
+			memset(m_Mesure_n.signature_val,0,64);
 			SMLComm.SendPtr+=64;
 #else
 		flag=0;
@@ -369,6 +370,7 @@ uint8_t GetP_Signature(uint16_t Flag)
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x80|((64+2)>>4);
 		SMLComm.SendBuf[SMLComm.SendPtr++]=((64+2))&0xf;
 			memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],m_Mesure.signature_val,64);
+			memset(m_Mesure.signature_val,0,64);
 			SMLComm.SendPtr+=64;
 #else
 		flag=0;
@@ -392,7 +394,6 @@ uint8_t GetP_Signature(uint16_t Flag)
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x20;
 	}
 	memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],m_Mesure.signature_val,32);
-	SMLComm.SendPtr+=32;
 	SMLComm.SendBuf[SMLComm.SendPtr++]=0x02;
 	if(m_Mesure.signature_val[32]&0x80)
 	{
@@ -511,19 +512,21 @@ uint8_t Judge_ResteCry(unsigned char *input,unsigned char *output)
 uint8_t Judge_P(unsigned char *input,unsigned char *output)
 {
 	uint8_t flag;
-	E2P_RData(&flag,E2P_Director,1);
-	
-	if((flag&1)==0)
-	{
-		return ReturnERR15;
-	}
 	if(input==0)
 	{
-		return ReturnOK;
+		if(m_Mesure.signature_val[0])
+			return ReturnOK;
+		else
+			return ReturnERR15;
 	}
 	
 	if(input[0]==0)
 		return ReturnERR05;
+	E2P_RData(&flag,E2P_Director,1);
+	if((flag&1)==0)
+	{
+		return ReturnERR15;
+	}
 	signature_flag[0]=1;
 	//E2P_RData(&flag,E2P_OrderPlusA,1);
 	//if(flag==input[0])
@@ -534,19 +537,21 @@ uint8_t Judge_P(unsigned char *input,unsigned char *output)
 uint8_t Judge_N(unsigned char *input,unsigned char *output)
 {
 	uint8_t flag=0;
+	
+	if(input==0)
+	{
+		if(m_Mesure_n.signature_val[0])
+			return ReturnOK;
+		else
+			return ReturnERR15;
+	}
+	if(input[0]==0)
+		return ReturnERR05;
 	E2P_RData(&flag,E2P_Director,1);
 	if((flag&2)==0)
 	{
-		return ReturnERR15;
+		return ReturnERR22;
 	}
-	if(input==0)
-	{
-		return ReturnOK;
-	}
-	
-	
-	if(input[0]==0)
-		return ReturnERR05;
 	signature_flag[1]=1;
 //	E2P_RData(&flag,E2P_OrderDecA,1);
 //	if(flag==input[0])
@@ -682,3 +687,99 @@ uint8_t GetI_back(uint16_t Flag)
 	return ReturnOK;
 }
 
+uint8_t Judge_PINCODE(unsigned char *input,unsigned char *output)
+{
+	uint8_t i;
+	if(input==0)
+	{
+		return ReturnOK;
+	}	
+	if(memcmp(input,"0000",4)==0)
+	{
+		return ReturnERR14;
+	}
+	
+	for(i=0;i<4;++i)
+	{
+		if((input[i]<'0') || (input[i]>'9'))
+			return ReturnERR14;
+	}
+	
+	return ReturnOK;
+}
+
+
+uint8_t ReSetDay(uint16_t Flag)
+{
+	if(Flag==SetPropP_Res)
+	{
+		Para.P0_day = 0;
+		Para.P0_week = 0;
+		Para.P0_month = 0;
+		Para.P0_year = 0;
+	}
+	return ReturnOK;
+}
+
+uint8_t ReSetLast(uint16_t Flag)
+{
+	if(Flag==SetPropP_Res)
+	{
+		Para.P0_last = -1;
+	}
+	return ReturnOK;
+}
+
+
+uint8_t Judge_Day(unsigned char *input,unsigned char *output)
+{
+	if(input==0)
+	{
+		//--SMLComm.SendPtr;
+		if(Para.P0_day==0)
+			return ReturnERR23;
+	}	
+	return ReturnOK;
+}
+
+uint8_t Judge_Week(unsigned char *input,unsigned char *output)
+{
+	if(input==0)
+	{
+	//	--SMLComm.SendPtr;
+		if(Para.P0_week==0)
+			return ReturnERR23;
+	}	
+	return ReturnOK;
+}
+
+uint8_t Judge_Month(unsigned char *input,unsigned char *output)
+{
+	if(input==0)
+	{
+		//--SMLComm.SendPtr;
+		if(Para.P0_month==0)
+			return ReturnERR23;
+	}	
+	return ReturnOK;
+}
+
+uint8_t Judge_Year(unsigned char *input,unsigned char *output)
+{
+	if(input==0)
+	{
+		//--SMLComm.SendPtr;
+		if(Para.P0_year==0)
+			return ReturnERR23;
+	}	
+	return ReturnOK;
+}
+
+uint8_t Judge_MaxLen(unsigned char *input,unsigned char *output)
+{
+	if(input==0)
+	{
+		return ReturnOK;
+	}	
+	return ReturnERR15;
+}

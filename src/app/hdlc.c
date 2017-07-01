@@ -129,7 +129,7 @@ void InitServerId(void)
 	//gprs_ms+=1;
 //	E2P_WData(E2P_FirmWareCheck,(unsigned char*)&i_rx_len,2);
 	E2P_WData(E2P_FirmWareCheck,b_Hdlc_sendbuf,2);
-	i_rx_len=1;
+	i_rx_len=3;
 	E2P_WData(E2P_Director,(unsigned char*)&i_rx_len,1);
 	i_rx_len=0;
 	i_send_len=0;
