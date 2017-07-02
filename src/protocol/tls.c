@@ -304,22 +304,32 @@ void Cm_Make_Public_Key(void)
 
 const uint8_t initKey[16]={0xA4,0x45,0x7D,0x73,0xF3,0xA8,0xED,0x56,0xB7,0x22,0x68,0xD9,0xB5,0x23,0x0F,0x7A};
 //const uint8_t initKey[16]={0x88,0x1e,0xa0,0x8c,0x49,0x5f,0x18,0x9d,0xcb,0x8e,0xfb,0x15,0xe6,0x15,0x90,0xfc};
-void ResetCryto(void)
+int ResetCryto(void)
 {
 	uint8_t *b_lmn_cert; 
-	b_lmn_cert=Get_LMN_Cert();
-	//m_tlscontext.crypto_time=120;
-	memset(b_lmn_cert,0,64);
-	if(!m_tlscontext.tls_sml)
+	//if((!m_tlscontext.tls_sml) || m_tlscontext.crypto_time)
+	//if((m_tlscontext.crypto_created&&m_tlscontext.crypto_time))
+	if(m_tlscontext.crypto_time)
 	{
+		b_lmn_cert=Get_LMN_Cert();
+		memset(b_lmn_cert,0,64);
 		memcpy(m_tlscontext.aes_key,initKey,16);
 		m_tlscontext.crypto_created=0;
 		E2P_WData(E2P_SymmetricalKey,m_tlscontext.aes_key,16);
+		return 0;
 	}
+	return 1;
 }
 #define __TLS_MAX_KEY_EXPANSION_SIZE 192
 uint8_t sign_out[__TLS_MAX_KEY_EXPANSION_SIZE];
 extern uint8_t Z1_M[16];
+void SetKeyTime(int timesec)
+{
+	//if(!m_tlscontext.tls_sml)
+	{
+		m_tlscontext.crypto_time=timesec;
+	}
+}
 void Generate_New_Key(void)
 {
 	if(m_tlscontext.tls_sml)
@@ -327,23 +337,24 @@ void Generate_New_Key(void)
 		AES_CMAC(m_tlscontext.aes_key,Z1_M,16,sign_out+16);
 		memcpy(m_tlscontext.aes_key,sign_out+16,16);
 		E2P_WData(E2P_SymmetricalKey,m_tlscontext.aes_key,16);
+		SetKeyTime(120);
 	}
 }
 uint8_t *GetMKey(void)
 {
 	return m_tlscontext.aes_key;
 }
-void SetKeyTime(int timesec)
-{
-	if(!m_tlscontext.tls_sml)
-	{
-		m_tlscontext.crypto_time=timesec;
-	}
-}
+
 void Close_tls(void)
 {
 	m_tlscontext.crypto_created=0;
 }
+
+uint32_t GetTlsTime(void)
+{
+	return m_tlscontext.crypto_time;
+}
+
 void Judge_Cryto(void)
 {
 	if(m_tlscontext.crypto_time)
@@ -351,7 +362,7 @@ void Judge_Cryto(void)
 		m_tlscontext.crypto_time--;
 		if(m_tlscontext.crypto_time==0)
 		{
-			memcpy(m_tlscontext.aes_key,initKey,16);//ResetCryto();
+		//	memcpy(m_tlscontext.aes_key,initKey,16);//ResetCryto();
 		}
 	}
 }
@@ -630,6 +641,7 @@ int tls_Init(void)
 		Cm_Ram_Inter(public_key_for_share+32,32);
 		uECC_valid_public_key(public_key_for_share,p_curve);
 #endif		
+		m_tlscontext.crypto_time=120;
 		return 0;
 }
 /*
@@ -896,9 +908,10 @@ struct TLSPacket *tls_build_done(struct TLSContext *context) {
 	return NULL;
 }
 
-int16_t tls_back_fun(void)
+int16_t tls_back_fun(uint8_t *buf)
 {
 	m_tlscontext.message_buffer_len=0;
+	m_tlscontext.message_buffer=buf;
 	fnWDT_Restart();
 #if 1	
 	tls_build_server_key_exchange(&m_tlscontext,1);

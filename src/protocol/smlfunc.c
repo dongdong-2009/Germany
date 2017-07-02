@@ -499,13 +499,18 @@ uint8_t GetU_L3(unsigned char *input,unsigned char *output)
 
 uint8_t Judge_ResteCry(unsigned char *input,unsigned char *output)
 {
+	//uint8_t *b_lmn_cert;
 	if(input==0)
 	{
 		return ReturnOK;
 	}	
 	if(input[0]==0)
 		return ReturnERR05;
-	ResetCryto();
+		
+	if(ResetCryto())
+	{
+		return ReturnERR15;
+	}
 	return ReturnOK;
 }
 
@@ -611,7 +616,7 @@ uint8_t GetS_back(uint16_t Flag)
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
-		SMLComm.SendBuf[SMLComm.SendPtr++]=0x52;SMLComm.SendBuf[SMLComm.SendPtr++]=0xff;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x52;SMLComm.SendBuf[SMLComm.SendPtr++]=0x0;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=Unit_W;
 		SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
 	}

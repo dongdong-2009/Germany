@@ -70,6 +70,7 @@ void Set_RTS5(uint8_t val)
 //struct S_Serial_ m_sserial[2];
 struct S_Serial_ m_sserial1;
 struct S_Serial_ m_sserial5;
+static uint8_t *buf_pos;
 void udelay(uint32_t us)
 {
 	uint32_t kk,i;
@@ -90,7 +91,8 @@ void DMA_Init(uint8_t ch)
 		SYSCTL->MOD1_EN |= (1);
 		SYSCTL->SYS_PS = 0x00;
 		DMA->C0CTRL |= (2<<3) |(3<<7);
-		DMA->IE |= 1 | (1<<4) | (1<<8);
+	//	DMA->IE |= 1 | (1<<4) | (1<<8);
+		DMA->IE |= (1<<4) | (1<<8);
 	}
 	else
 	{
@@ -98,7 +100,8 @@ void DMA_Init(uint8_t ch)
 		SYSCTL->MOD1_EN |= (1<<1);
 		SYSCTL->SYS_PS = 0x00;
 		DMA->C1CTRL |= (2<<3) |(28<<7);
-		DMA->IE |= 2 | (2<<4) | (2<<8);
+	//	DMA->IE |= 2 | (2<<4) | (2<<8);
+		DMA->IE |= (2<<4) | (2<<8);
 	}
 }
 
@@ -107,20 +110,24 @@ void DMA_SetLen(uint8_t ch,uint16_t Len)
 	if(ch==0)
 	{
 		DMA->C0CTRL &= 0xffff;
-		if(Len>254)
+		if(Len&0xff00)
 		{
-			DMA->C0CTRL |= (((Len>>3))<<24) | ((7)<<16);
+			DMA->C0CTRL |= (((Len>>8)-1)<<24) | ((255)<<16);
+			m_sserial1.send_pos=(Len>>8)<<8;
 		}
 		else
+		{
 			DMA->C0CTRL |= ((Len-1)<<16);
+			m_sserial1.send_pos=Len;
+		}
 		m_sserial1.send_len=Len;
 	}
 	else
 	{
 		DMA->C1CTRL &= 0xffff;
-		if(Len>200)
+		if(Len&0xff00)
 		{
-			DMA->C1CTRL |= (((Len>>3))<<24) | ((7)<<16);
+			DMA->C1CTRL |= (((Len>>2))<<24) | ((3)<<16);
 		}
 		else
 			DMA->C1CTRL |= ((Len)<<16);
@@ -159,9 +166,16 @@ void DMA_HANDLER(void)
 	{
 		DMA->C0CTRL &= ~1;
 		DMA->STA &=0x110;
-		while((UART1->STA & 0x300)!=0x100) __NOP(); 
-		while((UART1->STA&02)==0) __NOP();
-		UART1->CTRL |=0x02;
+		if(m_sserial1.send_pos!=m_sserial1.send_len)
+		{
+			DMA_Send(0,(uint8_t *)&(UART1->TXD),buf_pos+m_sserial1.send_pos, m_sserial1.send_len-m_sserial1.send_pos);
+		}
+		else
+		{
+			while((UART1->STA & 0x300)!=0x100) __NOP(); 
+			while((UART1->STA&02)==0) __NOP();
+			UART1->CTRL |=0x02;
+		}
 #if 0		
 		udelay(2);
 		m_sserial[0].send_len=0;
@@ -264,6 +278,7 @@ int16_t Serial_Write(uint8_t ch,uint8_t *buf,uint16_t len)
 	{
 		UART1->CTRL &=~(0x02);
 		DMA_Send(0,(uint8_t *)&(UART1->TXD),buf, len);
+		buf_pos = buf;
 	}
 	else
 	{
@@ -335,7 +350,8 @@ void UART0_HANDLER(void)
 	return;
 }
 #endif
-
+extern uint8_t mcu_busy;
+extern void HDLC_Send_RNR(void);
 void UART1_HANDLER(void)
 {
 	u32  status;
@@ -346,13 +362,36 @@ void UART1_HANDLER(void)
 //	while(UART0->STA&1)
 	{		
 		m_sserial1.serial_rx_buf[m_sserial1.rx_len]=UART1->RXD;
-		UART1->STA |=1;
+		//UART1->STA |=1;
 		m_sserial1.rx_len++;
 		m_sserial1.rx_len%=SERIAL_BUFFER_LEN;
+		if(mcu_busy)
+		{
+			m_sserial1.serial_tx_buf[m_sserial1.pre_len]=UART1->RXD;
+			if(m_sserial1.pre_len==3)
+			{
+				if((m_sserial1.serial_tx_buf[0]!=0x7e) || (m_sserial1.serial_tx_buf[1]!=0xa0) || (m_sserial1.serial_tx_buf[2]!=9))
+				{
+					m_sserial1.pre_len=0;
+				}
+			}	
+			m_sserial1.pre_len++;
+			if(m_sserial1.pre_len==11)
+			{
+				HDLC_Send_RNR();
+				m_sserial1.pre_len=0;
+				m_sserial1.rx_pos=m_sserial1.rx_len;
+			}
+			m_sserial1.pre_len%=16;
+		}
+		else
+		{
+			m_sserial1.pre_len=0;
+		}
 	}
 	if(status&2)
 	{	
-		UART1->STA |= 2;
+		//UART1->STA |= 2;
 		udelay(1);
 		m_sserial1.send_len=0;
 		SET_UART1_RTS0;

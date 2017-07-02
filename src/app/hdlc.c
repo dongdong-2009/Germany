@@ -8,7 +8,7 @@
 #include "aes.h"
 #define TEST 1
 #undef TEST
-typedef int16_t  (*Hdlc_back_function)();
+typedef int16_t  (*Hdlc_back_function)(uint8_t *buf);
 extern int16_t tls_back_fun(void);
 #define HDLC_READ(buf,len) Serial_Read(0,buf,len)
 #define HDLC_WRITE(buf,len) (Serial_Write(0,buf,len))
@@ -47,6 +47,9 @@ uint8_t sml_test[256]={0x1B,0x1B,0x1B,0x1B,0x01,0x01,0x01,0x01,0x76,0x05,0x01,0x
 0x00,0x02,0x01,0x71,0x01,0x63,0xBB,0xB5,0x00,0x00,0x00,0x00,0x1B,0x1B,0x1B,0x1B,
 0x1A,0x03,0x11,0x9B};
 #endif
+uint8_t pre_hdlc_buf[512];
+uint32_t pre_hdlc_len;
+uint8_t mcu_busy;
 uint8_t ControlByte,oldControlByte;
 uint8_t Connected;
 uint8_t b_short_frame[16];
@@ -330,7 +333,23 @@ int16_t Hdlc_Check(uint8_t *buf,uint16_t len)
 	}
 	return ret;
 }
-
+void HDLC_Send_RNR(void)
+{
+	uint16_t i_crc;
+  b_short_frame[0]=0x7e;
+	b_short_frame[1]=0xA0;
+  b_short_frame[2]=9;
+	b_short_frame[3]= 2;
+	b_short_frame[4]=(i_Meter_Prot<<1)|0x1;
+	b_short_frame[5]=(i_Meter_Addr<<1)&0xFE;
+	b_short_frame[6]=(i_Meter_Prot<<1)|0x1;
+	b_short_frame[7]=HDLC_RNR|(b_seq&0xf0);
+	i_crc = DoCrc16(0xffff,b_short_frame+1,7);
+	b_short_frame[8] = i_crc&0xff;
+	b_short_frame[9] = (i_crc>>8)&0xff;
+	b_short_frame[10] = 0x7e;
+	HDLC_WRITE(b_short_frame,11);
+}
 uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 {
 	uint16_t ptr;
@@ -478,9 +497,14 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 		case HDLC_SNRM:
 			b_seq=0x10;
 			Connected=255;
+		//	SetKeyTime(120);
 			ui_flag=1;
 			buf[ptr++]=HDLC_UA;
-			Close_tls();
+			if(i_Meter_Prot==HDLC_I_PROTOCOL_TLS_COSEM)
+			{
+				SetKeyTime(120);
+				Close_tls();
+			}
 		#if 0
 		  buf[10+Len]=0x81;Len++;
 			buf[10+Len]=0x80;Len++;
@@ -495,6 +519,11 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 			b_seq=0x10;
 			Connected=0;
 			buf[ptr++]=HDLC_DM;
+			if(i_Meter_Prot==HDLC_I_PROTOCOL_TLS_COSEM)
+			{
+				SetKeyTime(120);
+				Close_tls();
+			}
 			break;
 		default:
 			//b_seq=0x10;
@@ -540,7 +569,7 @@ void CM_HDLC_Receive(void)
 		return;
 	}*/
 	//test end
-#if 1	
+#if 0	
 	if(hdlc_back && (ControlByte==HDLC_RR) && (HDLS_STATUS==0))
 	{
 		i_send_len=hdlc_back();
@@ -571,7 +600,7 @@ void CM_HDLC_Receive(void)
 	#if 1 //test delete
 	if(i_rx_length==0)
 	{
-		if((ms_count>100) && i_rx_len)
+		if((ms_count&0xffffff00) && i_rx_len)
 			i_rx_len=0;
 		return;
 	}
@@ -653,8 +682,15 @@ void CM_HDLC_Receive(void)
 								{
 									oldControlByte=HDLC_I;
 									i_send_len=0;
+									if(pre_hdlc_len)
+									{
+										memcpy(b_Hdlc_sendbuf+10,pre_hdlc_buf,pre_hdlc_len);
+										i_send_len=pre_hdlc_len;
+										pre_hdlc_len=0;
+									}
 								}
 							}
+#if 0							
 							if(hdlc_back)
 							{
 								i_send_len=hdlc_back();
@@ -662,6 +698,7 @@ void CM_HDLC_Receive(void)
 								res_count=1;
 							//	b_seq = b_seq-0x20;
 							}
+#endif							
 						}
 						if(ControlByte==HDLC_RR  && i_send_len)
 						{
@@ -702,6 +739,13 @@ void CM_HDLC_Receive(void)
 						{
 							HDLC_WRITE(b_Hdlc_sendbuf,i_send_length);
 							i_send_length=0;
+							if(hdlc_back && (ControlByte==HDLC_RR))
+							{
+								mcu_busy=1;
+								pre_hdlc_len=hdlc_back(pre_hdlc_buf);
+								hdlc_back=0;
+								mcu_busy=0;
+							}
 						}
 					}
 		}
@@ -723,16 +767,27 @@ void CM_HDLC_Receive(void)
 				b_seq = (((b_Hdlc_buf[7]>>5)&7)<<1) | ((((b_Hdlc_buf[7]>>1))&7)<<5);
 			  b_seq +=0x20;
 		//	b_seq = (((((b_seq>>5)&0x7)+1)%8)<<5) | (b_seq&0x1e);
-#if 1		 //TEST delete	
+#if 0		 //TEST delete	
 			ControlByte=HDLC_RNR;
 			i_send_length=HDLC_Assemble(b_short_frame,0);
 			HDLC_WRITE(b_short_frame,i_send_length);
 			ControlByte=HDLC_I;
+#else
+			HDLC_Send_RNR();
 #endif			
 			switch(i_Meter_Prot)
 			{
 				case HDLC_I_PROTOCOL_TLS_COSEM:
 					i_send_len=Cm_Tls_Analys(b_Hdlc_buf+10,i_rx_length,b_Hdlc_sendbuf+10,&hdlc_back);
+					#if 0				
+					if(hdlc_back)
+					{
+						mcu_busy=1;
+						pre_hdlc_len=hdlc_back(pre_hdlc_buf);
+						mcu_busy=0;
+						hdlc_back=0;
+					}
+					#endif
 				/*	if(i_send_len<70)
 					{
 						i_send_length=HDLC_Assemble(b_Hdlc_sendbuf,i_send_len);
