@@ -72,7 +72,7 @@ void Signature_Measure(void)
 		memcpy(sign_buf+30,&Para.Pp0,8);
 		Cm_Ram_Inter(sign_buf+30,8);
 		memcpy(&m_Mesure.value,sign_buf+30,8);
-		Cm_Signature(privateK,sign_buf,95,m_Mesure.signature_val);
+		Cm_Signature(privateK,sign_buf,96,m_Mesure.signature_val);
 		Cm_Ram_Inter(m_Mesure.signature_val,32);
 		Cm_Ram_Inter(m_Mesure.signature_val+32,32);
 	}
@@ -97,7 +97,7 @@ void Signature_Measure(void)
 	memcpy(sign_buf+30,&Para.Pn0,8);
 	Cm_Ram_Inter(sign_buf+30,8);
 	memcpy(&m_Mesure_n.value,sign_buf+30,8);
-	Cm_Signature(privateK,sign_buf,95,m_Mesure_n.signature_val);
+	Cm_Signature(privateK,sign_buf,96,m_Mesure_n.signature_val);
 	Cm_Ram_Inter(m_Mesure_n.signature_val,32);
 	Cm_Ram_Inter(m_Mesure_n.signature_val+32,32);
 	}
