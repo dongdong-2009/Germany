@@ -593,6 +593,7 @@ void AnalyseSML(uint8_t *sendbuf)
 //SML通信的初始化//
 void	SMLCommInit(void)
 {
+	int i;
   SMLComm.LayerNumR=0;//初始化接收的数据长度,层数,解析的层数等//
   SMLComm.RecLg=0;
   SMLComm.RecLgA=0;
@@ -602,7 +603,11 @@ void	SMLCommInit(void)
   SMLComm.Flag &=~ (F_Attention_Fall+ F_Attention_Open+F_Attention_List + F_Attention_Only + F_Attention_NotDoneGroup+F_Attention_NotDoneALL);
   SMLComm.OpenFlag = 0;
   SMLComm.WrongTypeNum = 0xFF;
-  
+  for(i=0;i<16;++i)
+	{
+		OrderRecord[i].OLStartAdd=0;
+		OrderRecord[i].OLLength=0;
+	}
   
   SMLRecord[0].LayerNum=0;//清第一条解析记录//
   SMLRecord[0].StartAdd=0;
