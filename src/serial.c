@@ -409,14 +409,14 @@ void UART5_HANDLER(void)
 //	while(UART0->STA&1)
 	{		
 		m_sserial5.serial_rx_buf[m_sserial5.rx_len]=UART5->RXD;
-		UART5->STA |=1;
+		//UART5->STA |=1;
 		m_sserial5.rx_len++;
 		m_sserial5.rx_len%=SERIAL_BUFFER_LEN;
 	}
 	if(status&2)
 	{	
 		m_sserial5.send_len=0;
-		UART5->STA |= 2;
+	//	UART5->STA |= 2;
 		SET_UART5_RTS0;
 	}
 	return;

@@ -7,7 +7,7 @@
 #define IEC1107_READ(buf,len) Serial_Read(1,buf,len)
 #define IEC1107_WRITE(buf,len) (Serial_Write(1,buf,len))
 #define IEC1107_STATUS				Serial_Status(1)
-uint8_t iec1107_buf[128];
+uint8_t iec1107_buf[256];
 uint8_t iec1107_sendbuf[64];
 uint8_t iec1107_buf_pos;
 struct iec1107_s
@@ -131,7 +131,7 @@ void iec1107_write(void)
 		  iec1107_sendbuf[5]=0x0a;
 			ieccmd_ptr++;
 			IEC1107_WRITE(iec1107_sendbuf,6);
-			Comm.BTime2=90;
+			Comm.BTime2=120;
 		  break;
 		default:
 			ieccmd_ptr++;
@@ -142,11 +142,11 @@ void iec1107_write(void)
 }
 void iec1107_read(void)
 {
-	uint8_t len,pos,i,j,k,p,kk;
+	uint16_t len,pos,i,j,k,p,kk;
 	uint64_t tmp;
-	if(iec1107_buf_pos>100)
+	if(iec1107_buf_pos>250)
 		iec1107_buf_pos=0;
-	len=IEC1107_READ(iec1107_buf+iec1107_buf_pos,127-iec1107_buf_pos);
+	len=IEC1107_READ(iec1107_buf+iec1107_buf_pos,250-iec1107_buf_pos);
 	if(len)
 	{
 		Comm.BTime2=128;
@@ -175,7 +175,7 @@ void iec1107_read(void)
 						break;
 				}*/
 #if 1				
-				for(j=i+1;j<len;++j)
+				for(j=i+1;(j<len) && (j<256);++j)
 				{
 					if(iec1107_buf[j]==0x0d && iec1107_buf[j+1]==0x0a)  //ÕÒµ½½áÎ²µÄ
 					{
@@ -220,7 +220,7 @@ void iec1107_read(void)
 					{
 						if(iec1107_buf[i]==0x02)
 							i++;
-						if(k<=i)
+						if(k<=(i+8))
 							break;
 						if(!memcmp(iec1107_table[p].iec1107_code,iec1107_buf+i,k-(i)))
 						{

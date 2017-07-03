@@ -41,6 +41,7 @@ uint8_t  data_sign_pri[32]={0x07,0xFD,0xDC,0x59,0x6E,0x00,0x35,0x2A,0xA0,0xA5,0x
 void Signature_Measure(void)
 {
 	//uint8_t privateK[32];
+	uint64_t tmp;
 	uint8_t *privateK;
 	//uint8_t flag;
 	if(signature_flag[0] || signature_flag[1])
@@ -49,7 +50,7 @@ void Signature_Measure(void)
 		//privateK=Cm_Get_ECC_Addr();
 		privateK=data_sign_pri;
 		memset(sign_buf,0,100);
-		E2P_RData(sign_buf,Server_ID,10);
+		E2P_RData(sign_buf,Server_ID,14);
 	}
 	//E2P_RData(&flag,E2P_OrderPlusA,1);
 	//if(flag)
@@ -61,17 +62,28 @@ void Signature_Measure(void)
 		memcpy(sign_buf+14,&Comm.SecPulseCnt,4);
 		Cm_Ram_Inter(sign_buf+14,4);
 		memcpy(&m_Mesure.capture_time,sign_buf+14,4);
-	
+		Cm_Ram_Inter(sign_buf+14,4); //test
 		//E2P_RData(sign_buf+18,E2P_SATEWORD,4);
 		memcpy(sign_buf+18,&Para.meter_sts,4);
-		//Cm_Ram_Inter(sign_buf+18,4);
+		Cm_Ram_Inter(sign_buf+18,4);
 		memcpy(&m_Mesure.sts,sign_buf+18,4);
+		Cm_Ram_Inter(sign_buf+18,4); //test
 		sign_buf[22]=0x01,sign_buf[23]=0x0,sign_buf[24]=0x1,sign_buf[25]=0x08,sign_buf[26]=0x0,sign_buf[27]=0xff,
-		sign_buf[28]=00,sign_buf[29]=Unit_Wh;
+		sign_buf[28]=Unit_Wh;sign_buf[29]=0xff;
 		//E2P_RData(sign_buf+30,CMon_EC_Pp0,8);
+#if 0		
 		memcpy(sign_buf+30,&Para.Pp0,8);
+#else
+	//*(unsigned long *)(sign_buf+30)=BCD4_Long(Para.Pp0);
+		tmp = BCD2_Word(Para.Pp0+4)*100000000;
+		tmp +=BCD4_Long(Para.Pp0);
+		tmp = tmp*10;
+		memcpy(sign_buf+30,&tmp,8);
+#endif		
 		Cm_Ram_Inter(sign_buf+30,8);
 		memcpy(&m_Mesure.value,sign_buf+30,8);
+		Cm_Ram_Inter(sign_buf+30,8);  //test
+		//Cm_Ram_Inter(sign_buf,96); //test
 		Cm_Signature(privateK,sign_buf,96,m_Mesure.signature_val);
 		Cm_Ram_Inter(m_Mesure.signature_val,32);
 		Cm_Ram_Inter(m_Mesure.signature_val+32,32);
@@ -86,17 +98,29 @@ void Signature_Measure(void)
 	memcpy(sign_buf+14,&Comm.SecPulseCnt,4);
 	Cm_Ram_Inter(sign_buf+14,4);
 	memcpy(&m_Mesure_n.capture_time,sign_buf+14,4);
-	
-//	E2P_RData(sign_buf+18,E2P_SATEWORD,4);
+	Cm_Ram_Inter(sign_buf+14,4);  //test
+	//E2P_RData(sign_buf+18,E2P_SATEWORD,4);
 	memcpy(sign_buf+18,&Para.meter_sts,4);
-//	Cm_Ram_Inter(sign_buf+18,4);
+	Cm_Ram_Inter(sign_buf+18,4);
 	memcpy(&m_Mesure_n.sts,sign_buf+18,4);
+	Cm_Ram_Inter(sign_buf+18,4);
 	sign_buf[22]=0x01,sign_buf[23]=0x0,sign_buf[24]=0x2,sign_buf[25]=0x08,sign_buf[26]=0x0,sign_buf[27]=0xff,
-	sign_buf[28]=00,sign_buf[29]=Unit_Wh;
+	sign_buf[28]=Unit_Wh;sign_buf[29]=0xff;
 	//E2P_RData(sign_buf+30,CMon_EC_Pn0,8);
+#if 0		
 	memcpy(sign_buf+30,&Para.Pn0,8);
+#else
+	//*(unsigned long *)(sign_buf+30)=BCD4_Long(Para.Pn0);
+		//tmp = BCD4_Long(Para.Pn0);
+		tmp = BCD2_Word(Para.Pn0+4)*100000000;
+		tmp +=BCD4_Long(Para.Pn0);
+		tmp = tmp*10;
+		memcpy(sign_buf+30,&tmp,8);
+#endif		
 	Cm_Ram_Inter(sign_buf+30,8);
 	memcpy(&m_Mesure_n.value,sign_buf+30,8);
+	Cm_Ram_Inter(sign_buf+30,8);
+//	Cm_Ram_Inter(sign_buf,96); //test
 	Cm_Signature(privateK,sign_buf,96,m_Mesure_n.signature_val);
 	Cm_Ram_Inter(m_Mesure_n.signature_val,32);
 	Cm_Ram_Inter(m_Mesure_n.signature_val+32,32);
@@ -135,6 +159,62 @@ uint8_t SetMKey(uint16_t Flag)
 	return ReturnOK;
 }
 uint16_t Get_LMN_Cert_Len(uint8_t *recvbuf,uint16_t ret);
+
+uint8_t Get_PublicKey(uint16_t Flag)
+{
+	int rd_ptr,rd_len;
+	int flag;
+	unsigned char public_key_buf[66];
+	if(Flag==GetPropP_Req)
+	{
+			E2P_RData(public_key_buf,PublicKey_Y,64);
+#if 1
+			flag=64;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x80|((flag+2)>>4);
+			SMLComm.SendBuf[SMLComm.SendPtr++]=((flag+2))&0xf;
+      memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],public_key_buf,64);
+		 SMLComm.SendPtr +=64;
+#else		
+			flag=0;
+			if(public_key_buf[0]&0x80)
+				flag++;
+			if(public_key_buf[32]&0x80)
+				flag++;
+			flag +=0x46;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x80|((flag+2)>>4);
+			SMLComm.SendBuf[SMLComm.SendPtr++]=((flag+2))&0xf;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x30;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=flag;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x02;
+		if(public_key_buf[0]&0x80)
+		{
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x21;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x00;
+		}
+		else
+		{
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x20;
+		}
+		memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],public_key_buf,32);
+		SMLComm.SendPtr+=32;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x02;
+	if(public_key_buf[32]&0x80)
+	{
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x21;
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x00;
+	}
+	else
+	{
+		SMLComm.SendBuf[SMLComm.SendPtr++]=0x20;
+	}
+		memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],public_key_buf+32,32);
+		SMLComm.SendPtr+=32;
+#endif	
+	SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
+	}
+	return ReturnOK;
+}
+
 uint8_t Get_Certificate(uint16_t Flag)
 {
 	uint8_t *b_lmn_cert;
@@ -199,7 +279,7 @@ uint8_t GetN_Signature(uint16_t Flag)
 		return ReturnERR15;*/
 	if(Flag==GetPropP_Req)
 	{
-		memcpy(&SMLComm.SendBuf[SMLComm.SendPtr-8],&m_Mesure.value,8);
+		memcpy(&SMLComm.SendBuf[SMLComm.SendPtr-8],&m_Mesure_n.value,8);
 		SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
 		
 		SMLComm.SendBuf[++SMLComm.SendPtr]=0x73;
@@ -229,7 +309,7 @@ uint8_t GetN_Signature(uint16_t Flag)
 			SMLComm.SendBuf[SMLComm.SendPtr++]=0;
 			SMLComm.SendBuf[SMLComm.SendPtr++]=0;
 			SMLComm.SendBuf[SMLComm.SendPtr++]=0;*/
-			memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],&m_Mesure.sts,4);
+			memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],&m_Mesure_n.sts,4);
 			SMLComm.SendPtr+=4;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
 		
@@ -252,7 +332,7 @@ uint8_t GetN_Signature(uint16_t Flag)
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
-#if 1		
+#if 0		
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x80|((64+2)>>4);
 		SMLComm.SendBuf[SMLComm.SendPtr++]=((64+2))&0xf;
 			memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],m_Mesure_n.signature_val,64);
@@ -264,7 +344,7 @@ uint8_t GetN_Signature(uint16_t Flag)
 		flag++;
 	if(m_Mesure_n.signature_val[32]&0x80)
 		flag++;
-	flag +=0x44;
+	flag +=0x46;
 	SMLComm.SendBuf[SMLComm.SendPtr++]=0x80|((flag+2)>>4);
 	SMLComm.SendBuf[SMLComm.SendPtr++]=((flag+2))&0xf;
 	SMLComm.SendBuf[SMLComm.SendPtr++]=0x30;
@@ -293,6 +373,7 @@ uint8_t GetN_Signature(uint16_t Flag)
 	}
 	memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],m_Mesure_n.signature_val+32,32);
 	SMLComm.SendPtr+=32;
+	memset(m_Mesure_n.signature_val,0,64);
 #endif
 		SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
 	}
@@ -366,7 +447,7 @@ uint8_t GetP_Signature(uint16_t Flag)
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
-#if 1		
+#if 0		
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x80|((64+2)>>4);
 		SMLComm.SendBuf[SMLComm.SendPtr++]=((64+2))&0xf;
 			memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],m_Mesure.signature_val,64);
@@ -378,7 +459,7 @@ uint8_t GetP_Signature(uint16_t Flag)
 		flag++;
 	if(m_Mesure.signature_val[32]&0x80)
 		flag++;
-	flag +=0x44;
+	flag +=0x46;
 	SMLComm.SendBuf[SMLComm.SendPtr++]=0x80|((flag+2)>>4);
 	SMLComm.SendBuf[SMLComm.SendPtr++]=((flag+2))&0xf;
 	SMLComm.SendBuf[SMLComm.SendPtr++]=0x30;
@@ -394,6 +475,7 @@ uint8_t GetP_Signature(uint16_t Flag)
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x20;
 	}
 	memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],m_Mesure.signature_val,32);
+	SMLComm.SendPtr+=32;
 	SMLComm.SendBuf[SMLComm.SendPtr++]=0x02;
 	if(m_Mesure.signature_val[32]&0x80)
 	{
@@ -406,6 +488,7 @@ uint8_t GetP_Signature(uint16_t Flag)
 	}
 	memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],m_Mesure.signature_val+32,32);
 	SMLComm.SendPtr+=32;
+	memset(m_Mesure.signature_val,0,64);
 #endif
 		SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
 	}

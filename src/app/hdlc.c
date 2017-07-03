@@ -76,6 +76,7 @@ void InitServerId(void)
 	res_count=0;
 	//memset(b_Hdlc_buf,0,512);
 	memset(b_Hdlc_sendbuf,0,512);
+	E2P_WData(Server_ID+10,b_Hdlc_sendbuf,4);
 	hdlc_back=0;
 #ifdef TEST	
 	hdlc_back=tls_back_fun;

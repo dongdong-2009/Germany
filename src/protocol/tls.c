@@ -296,10 +296,12 @@ uint8_t *Cm_Get_ECC_Addr(void)
 
 void Cm_Make_Public_Key(void)
 {
+#if 0	
 	uECC_compute_public_key(m_tlscontext.ecc_priv,m_tlscontext.public_key,p_curve);
 	Cm_Ram_Inter(m_tlscontext.public_key,32);
 	Cm_Ram_Inter(m_tlscontext.public_key+32,32);
 	E2P_WData(PublicKey_Y,m_tlscontext.public_key,64);
+#endif	
 }
 
 const uint8_t initKey[16]={0xA4,0x45,0x7D,0x73,0xF3,0xA8,0xED,0x56,0xB7,0x22,0x68,0xD9,0xB5,0x23,0x0F,0x7A};
@@ -448,7 +450,12 @@ void Cm_Signature(uint8_t *pri,uint8_t *in,uint32_t Len,uint8_t *out)
 {
 	mbedtls_sha256(in,Len,sign_out,0);
 	uECC_sign(pri,sign_out,32,out,p_curve);
+/*	uECC_compute_public_key(pri,m_tlscontext.public_key,p_curve);
+	Cm_Ram_Inter(m_tlscontext.public_key,32);
+	Cm_Ram_Inter(m_tlscontext.public_key+32,32);
+	E2P_WData(PublicKey_Y,m_tlscontext.public_key,64);*/
 }
+
 int tls_Init(void)
 {
 	unsigned char *privateK;
@@ -463,6 +470,7 @@ int tls_Init(void)
 		unsigned char b_pri[32]={0x70,0xA1,0x2C,0x2D,0xB1,0x68,0x45,0xED,0x56,0xFF,0x68,0xCF,0xC2,0x1A,0x47,0x2B,
 0x3F,0x04,0xD7,0xD6,0x85,0x1B,0xF6,0x34,0x9F,0x2D,0x7D,0x5B,0x34,0x52,0xB3,0x8A};
 #endif	
+		
 		uint8_t *ptr;
 		uint8_t publicK[64];
 		uint8_t *b_lmn_cert;
@@ -479,6 +487,11 @@ int tls_Init(void)
 		
 		uECC_set_rng(ecc_rng);
 		p_curve = uECC_secp256r1();
+		Cm_Ram_Inter(b_pri,32);
+		uECC_compute_public_key(b_pri,m_tlscontext.public_key,p_curve);
+		Cm_Ram_Inter(m_tlscontext.public_key,32);
+		Cm_Ram_Inter(m_tlscontext.public_key+32,32);
+		E2P_WData(PublicKey_Y,m_tlscontext.public_key,64);
 //		CmDeAES128(m_serverkey,m_serveriv,0,m_cipher,80,sign_out);
 #if 0
 		
@@ -640,7 +653,7 @@ int tls_Init(void)
 		Cm_Ram_Inter(public_key_for_share,32);  
 		Cm_Ram_Inter(public_key_for_share+32,32);
 		uECC_valid_public_key(public_key_for_share,p_curve);
-#endif		
+#endif
 		m_tlscontext.crypto_time=120;
 		return 0;
 }
