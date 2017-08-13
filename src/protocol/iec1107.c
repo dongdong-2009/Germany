@@ -18,7 +18,7 @@ struct iec1107_s
 };
 uint8_t ieccmd_ptr;
 #define IEC1107_TABLE_NUM    17
-struct iec1107_s iec1107_table[IEC1107_TABLE_NUM]=
+const struct iec1107_s iec1107_table[IEC1107_TABLE_NUM]=
 {
 #if 0	
 	"96.1.0",(uint32_t)&Para.servrid,16,

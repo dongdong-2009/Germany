@@ -10,7 +10,7 @@
 #include "TypeE2p.h"
 extern SMLCOMM	SMLComm;
 extern ORDERRECORD	OrderRecord[16];
-extern SMLRECORD SMLRecord[8];
+extern SMLRECORD SMLRecord[6];
 struct S_Measure_{
 	uint64_t value;
 	uint32_t capture_time;
@@ -134,6 +134,63 @@ void Signature_Measure(void)
 	Cm_Ram_Inter(m_Mesure_n.signature_val+32,32);
 #endif	
 	}
+}
+
+uint8_t Get_P_Sig_val(unsigned char *input,unsigned char *output)
+{
+	if(m_Mesure.signature_val[0])
+	{
+		memcpy(output,&m_Mesure.value,8);
+		return ReturnOK;
+	}
+	else
+		return ReturnERR15;
+		
+}
+
+uint8_t Get_P_Sig_sts(unsigned char *output)
+{
+	memcpy(output,&m_Mesure.sts,4);
+}
+
+uint8_t Get_P_Sig_time(unsigned char *output)
+{
+	memcpy(output,&m_Mesure.capture_time,4);
+}
+
+
+uint8_t Get_P_Signature(unsigned char *output)
+{
+	memcpy(output,m_Mesure.signature_val,64);
+}
+
+
+uint8_t Get_N_Sig_val(unsigned char *input,unsigned char *output)
+{
+	if(m_Mesure_n.signature_val[0])
+	{
+		memcpy(output,&m_Mesure_n.value,8);
+		return ReturnOK;
+	}
+	else
+		return ReturnERR15;
+		
+}
+
+uint8_t Get_N_Sig_sts(unsigned char *output)
+{
+	memcpy(output,&m_Mesure_n.sts,4);
+}
+
+uint8_t Get_N_Sig_time(unsigned char *output)
+{
+	memcpy(output,&m_Mesure_n.capture_time,4);
+}
+
+
+uint8_t Get_N_Signature(unsigned char *output)
+{
+	memcpy(output,m_Mesure_n.signature_val,64);
 }
 
 uint8_t SetPrivateKey(uint16_t Flag)
@@ -785,6 +842,72 @@ uint8_t GetS_back(uint16_t Flag)
 	return ReturnOK;
 }
 
+uint8_t GetSa(unsigned char *input,unsigned char *output)
+{
+	int64_t tmp;
+	if(input)
+		return ReturnOK;
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+//	memset(output,0,8);
+	//memcpy(output+4,&Para.Pt,4);
+//*(unsigned long *)(output+4)=BCD4_Long(Para.Pt);
+//	Para.Pa[0]&=0xf0;
+	tmp = BCD4_Long(Para.Pa);
+	//tmp /=10;
+	if(Para.StatusWord &(1<<12))
+		tmp = tmp*-1;
+	memcpy(output,&tmp,8);
+	Cm_Ram_Inter(output,8);
+	return ReturnOK;
+}
+
+uint8_t GetSb(unsigned char *input,unsigned char *output)
+{
+	int64_t tmp;
+	if(input)
+		return ReturnOK;
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+//	memset(output,0,8);
+	//memcpy(output+4,&Para.Pt,4);
+//*(unsigned long *)(output+4)=BCD4_Long(Para.Pt);
+	//Para.Pb[0]&=0xf0;
+	tmp = BCD4_Long(Para.Pb);
+//	tmp /=10;
+	if(Para.StatusWord &(1<<13))
+		tmp = tmp*-1;
+	memcpy(output,&tmp,8);
+	Cm_Ram_Inter(output,8);
+	return ReturnOK;
+}
+
+uint8_t GetSc(unsigned char *input,unsigned char *output)
+{
+	int64_t tmp;
+	if(input)
+		return ReturnOK;
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+//	memset(output,0,8);
+	//memcpy(output+4,&Para.Pt,4);
+//*(unsigned long *)(output+4)=BCD4_Long(Para.Pt);
+	//Para.Pc[0]&=0xf0;
+	tmp = BCD4_Long(Para.Pc);
+//	tmp /=10;
+	if(Para.StatusWord &(1<<14))
+		tmp = tmp*-1;
+	memcpy(output,&tmp,8);
+	Cm_Ram_Inter(output,8);
+	return ReturnOK;
+}
+
 uint8_t GetP_back(uint16_t Flag)
 {
 	int i;
@@ -1016,4 +1139,288 @@ uint8_t Judge_MaxLen(unsigned char *input,unsigned char *output)
 		return ReturnOK;
 	}	
 	return ReturnERR15;
+}
+
+uint8_t GetAngle_back(uint16_t Flag)
+{
+	if(Flag==GetPropP_Req)
+	{
+		if(OrderRecord[SMLRecord[1].record_num+1].OLStartAdd && OrderRecord[SMLRecord[1].record_num+1].OLLength==3)
+		{
+			SMLComm.SendBuf[++SMLComm.SendPtr]=0x73;
+			++SMLComm.SendPtr;
+			RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[6].OLStartAdd]),OrderRecord[6].OLLength);//дattri
+			SMLComm.SendPtr+=OrderRecord[6].OLLength;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x03;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x52;SMLComm.SendBuf[SMLComm.SendPtr++]=0;//0xff; //1位
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=Unit_deg;
+			SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
+		}
+	}
+	return ReturnOK;
+}
+
+uint8_t GetAngle1(unsigned char *input,unsigned char *output)
+{
+	int64_t tmp;
+	if(input)
+		return ReturnOK;
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+	memset(output,0,8);
+	tmp = BCD2_Word(Para.Pangleba);
+	tmp /=10;
+	if(tmp>180)
+		tmp=(360-tmp)*(-1);
+	memcpy(output,&tmp,8);
+	Cm_Ram_Inter(output,8);
+	return ReturnOK;
+}
+
+uint8_t GetAngle2(unsigned char *input,unsigned char *output)
+{
+	int64_t tmp;
+	if(input)
+		return ReturnOK;
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+	memset(output,0,8);
+	tmp = BCD2_Word(Para.Pangleca);
+	tmp /=10;
+	if(tmp>180)
+		tmp=(360-tmp)*(-1);
+	memcpy(output,&tmp,8);
+	Cm_Ram_Inter(output,8);
+	return ReturnOK;
+}
+
+uint8_t GetAngle3(unsigned char *input,unsigned char *output)
+{
+	int64_t tmp;
+	if(input)
+		return ReturnOK;
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+	memset(output,0,8);
+	tmp = BCD2_Word(Para.Panglea);
+	tmp /=10;
+	if(tmp>180)
+		tmp=(360-tmp)*(-1);
+	memcpy(output,&tmp,8);
+	Cm_Ram_Inter(output,8);
+	return ReturnOK;
+}
+
+uint8_t GetAngle4(unsigned char *input,unsigned char *output)
+{
+	int64_t tmp;
+	if(input)
+		return ReturnOK;
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+	memset(output,0,8);
+	tmp = BCD2_Word(Para.Pangleb);
+	tmp /=10;
+	if(tmp>180)
+		tmp=(360-tmp)*(-1);
+	memcpy(output,&tmp,8);
+	Cm_Ram_Inter(output,8);
+	return ReturnOK;
+}
+
+uint8_t GetAngle5(unsigned char *input,unsigned char *output)
+{
+	int64_t tmp;
+	if(input)
+		return ReturnOK;
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+	memset(output,0,8);
+	tmp = BCD2_Word(Para.Panglec);
+	tmp /=10;
+	if(tmp>180)
+		tmp=(360-tmp)*(-1);
+	memcpy(output,&tmp,8);
+	Cm_Ram_Inter(output,8);
+	return ReturnOK;
+}
+
+uint8_t GetFre(unsigned char *input,unsigned char *output)
+{
+	unsigned int tmp;
+	if(input)
+		return ReturnOK;
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+	memset(output,0,8);
+	//memcpy(output+4,&Para.Pt,4);
+//*(unsigned long *)(output+4)=BCD4_Long(Para.Pt);
+//	Para.Pc[0]&=0xf0;
+	tmp = BCD2_Word(Para.Freq);
+	memcpy(output+4,&tmp,4);
+	Cm_Ram_Inter(output+4,4);
+	return ReturnOK;
+}
+
+uint8_t SetManFlag(uint16_t Flag)
+{
+	uint8_t tmp_z[4];
+	if(Flag==SetPropP_Res)
+	{
+		SM.MagnetOnCnt=0;
+		memset(tmp_z,0,4);
+		E2P_WData(MagneticONCnt,tmp_z,2);
+	}
+	return ReturnOK;
+}
+
+uint8_t SetCoverFlag(uint16_t Flag)
+{
+	uint8_t tmp_z[4];
+	if(Flag==SetPropP_Res)
+	{
+		SM.CoverOpenCnt=0;
+		SM.TCoverOpenCnt=0;
+		memset(tmp_z,0,4);
+		E2P_WData(OpenTCoverCnt,tmp_z,2);
+		E2P_WData(OpenCoverCnt,tmp_z,2);
+	}
+	return ReturnOK;
+}
+
+uint8_t Get_Certificate1(unsigned char *input,unsigned char *output)
+{
+	uint8_t *b_lmn_cert;
+	int rd_ptr,rd_len;
+	if(input)
+		return ReturnOK;
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+		b_lmn_cert=Get_LMN_Cert();
+		SMLComm.SendPtr--;
+		if(b_lmn_cert[2]==0)
+		{
+			SMLComm.SendBuf[++SMLComm.SendPtr]=0x01;
+		}
+		else
+		if(b_lmn_cert[2])
+		{
+			rd_len=(b_lmn_cert[2]<<8)|b_lmn_cert[3];
+			if(rd_len>500)
+			{
+				rd_len=Get_LMN_Cert_Len(b_lmn_cert+4,rd_len);
+			}
+			
+			if(rd_len<15)
+			{
+				SMLComm.SendBuf[SMLComm.SendPtr++]=rd_len;
+			}
+			else if(rd_len<253)
+			{
+				SMLComm.SendBuf[SMLComm.SendPtr++]=0x80|(((rd_len+2+4)>>4)&0xf);
+				SMLComm.SendBuf[SMLComm.SendPtr++]=((rd_len+2+4)&0xf);
+			}
+			else
+			{
+				//rd_len=296;
+				SMLComm.SendBuf[SMLComm.SendPtr++]=0x80|(((rd_len+3+4)>>8)&0xf);
+				SMLComm.SendBuf[SMLComm.SendPtr++]=0x80|(((rd_len+3+4)>>4)&0xf);
+				SMLComm.SendBuf[SMLComm.SendPtr++]=((rd_len+3+4)&0xf);
+			}
+			memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],b_lmn_cert,rd_len+4);
+			SMLComm.SendPtr+=rd_len+4;
+		}
+		return ReturnOK;
+}
+
+uint8_t GetIa(unsigned char *input,unsigned char *output)
+{
+	unsigned int tmp;
+	if(input)
+		return ReturnOK;
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+	memset(output,0,8);
+	tmp = BCD4_Long(Para.Ia);
+	memcpy(output+4,&tmp,4);
+	Cm_Ram_Inter(output+4,4);
+	return ReturnOK;
+}
+
+uint8_t GetIb(unsigned char *input,unsigned char *output)
+{
+	unsigned int tmp;
+	if(input)
+		return ReturnOK;
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+	memset(output,0,8);
+	tmp = BCD4_Long(Para.Ib);
+	memcpy(output+4,&tmp,4);
+	Cm_Ram_Inter(output+4,4);
+	return ReturnOK;
+}
+
+uint8_t GetIc(unsigned char *input,unsigned char *output)
+{
+	unsigned int tmp;
+	if(input)
+		return ReturnOK;
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+	memset(output,0,8);
+	tmp = BCD4_Long(Para.Ic);
+	memcpy(output+4,&tmp,4);
+	Cm_Ram_Inter(output+4,4);
+	return ReturnOK;
+}
+
+uint8_t GetLastPn(unsigned char *input,unsigned char *output)
+{
+	unsigned char Write_Buff[8];
+	uint64_t LongData;
+	if(input)
+		return ReturnOK;
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+	memset(output,0,8);
+	E2P_RECData(Write_Buff,Last_EC_Pp0,6);
+  LongData = BCD2_Word(Write_Buff+4)*100000000;
+	LongData +=BCD4_Long(Write_Buff);
+	LongData = LongData>>8;
+	if(LongData==0)
+	{
+		return ReturnERR23;
+	}
+	memcpy(output,&LongData,8);
+	Cm_Ram_Inter(output,8);
+	return ReturnOK;
 }

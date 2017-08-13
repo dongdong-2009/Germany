@@ -90,8 +90,8 @@ void ProcSec(void)
 	Cm_Ram_Inter((uint8_t *)&m_me,8);
 	E2P_WData(CMon_EC_Pn0,&m_me,8);
 #endif	
-	Para.Pp0++;
-	Para.Pn0++;
+//	Para.Pp0++;
+//	Para.Pn0++;
 	Para.meter_sts |= (1<<8)|(1<<18)|(1<<19)|(1<<20);
 /*	Para.Ua=220;
 	Para.Ub=221;

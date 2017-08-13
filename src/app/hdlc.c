@@ -47,7 +47,7 @@ uint8_t sml_test[256]={0x1B,0x1B,0x1B,0x1B,0x01,0x01,0x01,0x01,0x76,0x05,0x01,0x
 0x00,0x02,0x01,0x71,0x01,0x63,0xBB,0xB5,0x00,0x00,0x00,0x00,0x1B,0x1B,0x1B,0x1B,
 0x1A,0x03,0x11,0x9B};
 #endif
-uint8_t pre_hdlc_buf[384];
+uint8_t pre_hdlc_buf[256];
 uint32_t pre_hdlc_len;
 uint8_t mcu_busy;
 uint8_t ControlByte,oldControlByte;
@@ -287,8 +287,8 @@ int16_t Hdlc_Check(uint8_t *buf,uint16_t len)
 	ret=len;
 	for(i=0;(i)<len;++i)
 	{
-		//if((buf[i]!=0x7e) || ((buf[i+1]&0xF0)!=0xA0))
-		if((buf[i]!=0x7e) || ((buf[i+1]&0xF0)!=0xA0) || (((buf[i+3]>>1)!=i_Meter_Addr) && ((buf[i+3]>>1)!=0x7f)) )
+	//	if((buf[i]!=0x7e) || ((buf[i+1]&0xF0)!=0xA0) || (((buf[i+3]>>1)!=i_Meter_Addr) && ((buf[i+3]>>1)!=0x7f)) )
+		if((buf[i]!=0x7e) || ((buf[i+1]&0xF0)!=0xA0))
 		{
 			ret--;
 			continue;
@@ -309,6 +309,14 @@ int16_t Hdlc_Check(uint8_t *buf,uint16_t len)
 				i_crc=DoCrc16(0xffff,buf+i+1,frame_len-2);
 				if(i_crc == (buf[frame_len+i-1] | (buf[frame_len+i]<<8)))
 				{	
+#if 1					
+					if(((buf[i+3]>>1)!=i_Meter_Addr) && (buf[i+3]!=0xfe))
+					{
+						ret -= (frame_len+2);
+						i += (frame_len+1);
+						continue;
+					}
+#endif					
 					ret=0;
 					break;
 				}
@@ -634,15 +642,16 @@ void CM_HDLC_Receive(void)
 	{
 		i_rx_length=Serial_Read(b_Hdlc_buf,11);
 	}*/
-	#if 1 //test delete
+	#if 0 //test delete
 	if(i_rx_length==0)
 	{
 		if((ms_count&0xfffffff0) && i_rx_len)
 			i_rx_len=0;
 		return;
 	}
-	ms_count=0;
 	#endif
+	ms_count=0;
+
 	i_rx_len+=i_rx_length;
 	if(i_rx_len<11)
 		return;

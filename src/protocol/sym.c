@@ -240,7 +240,7 @@ int16_t Sym4(uint8_t *recvbuf,uint8_t *sendbuf,uint16_t len)
 		len-=25;
 	//	E2P_WData( E2P_SMGW_Certi,recvbuf+9,len-25);
 		if(len>256)
-			memcpy(b_gw_cert,recvbuf+9,256);
+			memcpy(b_gw_cert,recvbuf+9,255);
 		else
 			memcpy(b_gw_cert,recvbuf+9,len-25);
 		E2P_WData( E2P_SMGW_Certi,recvbuf+9,len-25);

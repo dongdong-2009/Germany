@@ -320,7 +320,7 @@ uint16_t Serial_Read(uint8_t ch,uint8_t *buf,uint16_t len)
 		p_serial->rx_pos++;
 		p_serial->rx_pos%=buf_len;
 		i++;
-		if(i>=len)
+		if(i>=len || buf[i-1]==0x7e)
 			break;
 #pragma GCC push_options
 #pragma GCC optimize ("O0")			

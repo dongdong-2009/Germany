@@ -1,8 +1,9 @@
+#include"sml.h"
 #include"data.h"
 #include "typeE2p.h"
-#include "sml.h"
 
-SMLRECORD SMLRecord[8];
+//SMLRECORD SMLRecord[20];
+SMLRECORD SMLRecord[6];
 ORDERRECORD	OrderRecord[16];
 ORDERRECORD	OrderRecord0100[10];
 SIGNATURE Signatrue;
@@ -214,6 +215,7 @@ signed AnalyseOrder(uint16_t BufAd,uint16_t DataLg,uint8_t LayerNo)
         Ptr++;
         if(Ptr>TempLg) return 0;
         NeedAnaLg=(Temp&0x0f)*16+(SMLComm.RecBuf[Ptr]&0xf);
+				
 				//zzl 20170629 add 
 				if(SMLComm.RecBuf[Ptr]&0x80)
 				{
@@ -222,6 +224,7 @@ signed AnalyseOrder(uint16_t BufAd,uint16_t DataLg,uint8_t LayerNo)
 					NeedAnaLg -= 1;
 				}
 				//zzl end
+				
         Temp=Ptr+NeedAnaLg-2;//计算出这一层数据完在接收缓冲区中的位置//
         if(Temp>TempLg) return 0;
         Ptr=Ptr+NeedAnaLg-2;//指针指向这一层的最后一字节//
@@ -256,7 +259,7 @@ signed AnalyseSMLMes(uint16_t BufAd,uint16_t DataLg,uint8_t LayerNo)
   uint16_t TempLgSub;//需解析的数据长度,在调用其他子程序时用作参数传递//
   uint16_t BufAdSub;//在调用子程序时的需解析的数据的BUFF中的位置//
   uint16_t	Crc16,CRC16P;
-  signed  Temp1;
+  int16_t  Temp1;
   
   Ptr=BufAd;
   TempLg=BufAd+DataLg;//计算出当前可以解析到的数据在BUFF中的位置//
@@ -397,7 +400,8 @@ signed AnalyseSMLMes(uint16_t BufAd,uint16_t DataLg,uint8_t LayerNo)
       {
         Ptr++;
         if(Ptr>TempLg) return 0;
-        NeedAnaLg=(Temp&0x0f)*16+(SMLComm.RecBuf[Ptr]&0xf);
+       
+				NeedAnaLg=(Temp&0x0f)*16+(SMLComm.RecBuf[Ptr]&0xf);
 				//zzl 20170629 add 
 				if(SMLComm.RecBuf[Ptr]&0x80)
 				{
@@ -406,6 +410,7 @@ signed AnalyseSMLMes(uint16_t BufAd,uint16_t DataLg,uint8_t LayerNo)
 					NeedAnaLg -= 1;
 				}
 				//add end
+				
         Temp=Ptr+NeedAnaLg-2;//计算出这一层数据完在接收缓冲区中的位置//
         if(Temp>TempLg) return 0;
         Ptr=Ptr+NeedAnaLg-2;//指针指向这一层的最后一字节//
@@ -603,17 +608,18 @@ void	SMLCommInit(void)
   SMLComm.Flag &=~ (F_Attention_Fall+ F_Attention_Open+F_Attention_List + F_Attention_Only + F_Attention_NotDoneGroup+F_Attention_NotDoneALL);
   SMLComm.OpenFlag = 0;
   SMLComm.WrongTypeNum = 0xFF;
-  for(i=0;i<16;++i)
-	{
-		OrderRecord[i].OLStartAdd=0;
-		OrderRecord[i].OLLength=0;
-	}
+  
   
   SMLRecord[0].LayerNum=0;//清第一条解析记录//
   SMLRecord[0].StartAdd=0;
   SMLRecord[0].EndAdd=0;
   SMLRecord[0].SMLOrder=0;
   SMLRecord[0].Flag=0;
+	for(i=0;i<16;++i)
+	{
+		OrderRecord[i].OLStartAdd=0;
+		OrderRecord[i].OLLength=0;
+	}
   SMLComm.EndNum=0;
 }	
 //发送缓冲区中的头的填写//
@@ -769,7 +775,7 @@ void	OpenRes(void)
   //	SMLComm.SendPtr+=OrderRecord0100[3].OLLength;//填写Server_ID//
   SMLComm.SendPtr+=11;
   SMLComm.SendPtr++;
-	//zzl 20170629 add 
+  	//zzl 20170629 add 
 #if 0
   SMLComm.SendBuf[SMLComm.SendPtr]=0x01;//填写Reftime//
   SMLComm.SendPtr++;
@@ -1729,11 +1735,11 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
 {
   uint16_t TempAdd,TempLength;
   uint16_t 	SendPtrBAK;
-  uint32_t	Adder;
+  uint32_t	Adder,tmp;
   uint16_t	State;
   uint32_t* 	PowerData;
   uint64_t	ECData = 0;
-  uint8_t	Len;
+  uint8_t	Len,i;
   uint8_t	OBISType;
 	uint8_t ret;
 	uint8_t attri_num;
@@ -1770,7 +1776,6 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
 	TempAdd=OrderRecord[4].OLStartAdd-1;
 	
 	attri_num=SMLComm.RecBuf[TempAdd];
-	//if(attri_num==0x73 || attri_num==0x76)
 	if(attri_num==0x73 || attri_num==0x76 || attri_num==0x75)
 		SMLComm.SendBuf[SMLComm.SendPtr]=SMLComm.RecBuf[TempAdd];
 	else
@@ -1802,7 +1807,7 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
 		SMLComm.SendPtr+=OrderRecord[8].OLLength;
 		RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[9].OLStartAdd]),OrderRecord[9].OLLength);//写attri
 		SMLComm.SendPtr+=OrderRecord[9].OLLength;
-	}		
+	}	
 	else if(attri_num==0x75)
 	{
 		RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[6].OLStartAdd]),OrderRecord[6].OLLength);//写attri
@@ -1812,6 +1817,13 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
 		RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[8].OLStartAdd]),OrderRecord[8].OLLength);//写attri
 		SMLComm.SendPtr+=OrderRecord[8].OLLength;
 	}
+	else if(attri_num==0x74)
+	{
+		RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[6].OLStartAdd]),OrderRecord[6].OLLength);//写attri
+		SMLComm.SendPtr+=OrderRecord[6].OLLength;
+		RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[7].OLStartAdd]),OrderRecord[7].OLLength);//写attri
+		SMLComm.SendPtr+=OrderRecord[7].OLLength;
+	}	
 #endif	
   SMLComm.SendBuf[SMLComm.SendPtr]=0x73;
   SMLComm.SendPtr++;
@@ -1822,19 +1834,147 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
 #if 0	
 	SMLComm.SendBuf[SMLComm.SendPtr]=0x71;
 #else
-	//if(attri_num==0x73 || attri_num==0x76)
-	if(attri_num==0x73 || attri_num==0x76 || attri_num==0x75)
+	
+//	if(attri_num==0x73 || attri_num==0x76 || attri_num==0x75)
 		SMLComm.SendBuf[SMLComm.SendPtr]=attri_num-1;
-	else
-		SMLComm.SendBuf[SMLComm.SendPtr]=0x71;
+//	else
+//		SMLComm.SendBuf[SMLComm.SendPtr]=0x71;
 #endif	
-  SMLComm.SendPtr++;
-	/*if(attri_num==0x73 || attri_num==0x76)
+//  SMLComm.SendPtr++;
+	attri_num&=0xf;
+	attri_num+=4;
+	for(i=5;i<attri_num;++i)
 	{
-		SMLComm.SendBuf[SMLComm.SendPtr]=attri_num;
-	}
-	else*/
-		SMLComm.SendBuf[SMLComm.SendPtr]=0x73;
+			if(OrderRecord[i].OLStartAdd && OrderRecord[i].OLLength==3)
+			{
+				SMLComm.SendBuf[++SMLComm.SendPtr]=0x73;
+				++SMLComm.SendPtr;
+				RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[i].OLStartAdd]),OrderRecord[i].OLLength);//дattri
+				SMLComm.SendPtr+=OrderRecord[i].OLLength;
+				SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+				SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;
+				SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
+				short_Name = SMLComm.RecBuf[OrderRecord[i].OLStartAdd+1];
+				short_Name = (short_Name<<8) | SMLComm.RecBuf[OrderRecord[i].OLStartAdd+2];
+				switch(short_Name)
+				{
+					case 1:
+						SMLComm.SendBuf[SMLComm.SendPtr++]=0x7;
+						SMLComm.SendBuf[SMLComm.SendPtr++]=SMLOBISTab[OBISNo].OBIS0;
+						SMLComm.SendBuf[SMLComm.SendPtr++]=SMLOBISTab[OBISNo].OBIS1;
+						SMLComm.SendBuf[SMLComm.SendPtr++]=SMLOBISTab[OBISNo].OBIS2;
+						SMLComm.SendBuf[SMLComm.SendPtr++]=SMLOBISTab[OBISNo].OBIS3;
+						SMLComm.SendBuf[SMLComm.SendPtr++]=SMLOBISTab[OBISNo].OBIS4;
+						SMLComm.SendBuf[SMLComm.SendPtr++]=SMLOBISTab[OBISNo].OBIS5;
+					//	SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
+						break;
+					case 2:
+						if((State & READ) != READ)
+							return(ReturnERR11);
+						if(Len>14)
+						{
+							SMLComm.SendBuf[SMLComm.SendPtr++]=0x80|((Len+2)>>4);
+							SMLComm.SendBuf[SMLComm.SendPtr]=((Len+2))&0xf;
+						}
+						else
+							SMLComm.SendBuf[SMLComm.SendPtr]=OBISType;
+					
+						switch(State & 0x00FF)
+						{
+							case RAM_INTER_TYPE:
+								RAM_WriteInter(&(SMLComm.SendBuf[++SMLComm.SendPtr]),(uint8_t*)Adder,Len);
+								break;
+							case RAM_TYPE:
+								RAM_Write(&(SMLComm.SendBuf[++SMLComm.SendPtr]),(uint8_t*)Adder,Len);
+								break;
+							case E2P_TYPE:
+								E2P_RData(&SMLComm.SendBuf[++SMLComm.SendPtr],Adder,Len);
+								break;
+							case FUN_TYPE:
+								++SMLComm.SendPtr;
+								ret=smal_callbefore(0,&SMLComm.SendBuf[SMLComm.SendPtr]);
+								if(ret!=ReturnOK)
+								{
+									return ret;
+								}
+								break;
+							default:
+									break;
+						}
+						SMLComm.SendPtr += Len;
+						//SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
+						break;
+					case 3:
+						SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+						SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x03;
+						SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+						SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
+						SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+						SMLComm.SendBuf[SMLComm.SendPtr++]=0x52;SMLComm.SendBuf[SMLComm.SendPtr++]=SMLOBISTab[OBISNo].Scale;
+						SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=SMLOBISTab[OBISNo].Unit;
+						//SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
+						break;
+					case 4:
+						SMLComm.SendBuf[SMLComm.SendPtr++]=0x65;
+						if(0xaaaaaaaa==SMLOBISTab[OBISNo].Adder)
+						{
+							Get_P_Sig_sts(&SMLComm.SendBuf[SMLComm.SendPtr]);
+						}
+						else 	if(0x55555555==SMLOBISTab[OBISNo].Adder)
+						{
+							Get_N_Sig_sts(&SMLComm.SendBuf[SMLComm.SendPtr]);
+						}
+						else
+						{
+							memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],&Para.meter_sts,4);
+							Cm_Ram_Inter(&SMLComm.SendBuf[SMLComm.SendPtr],4);
+						}
+						SMLComm.SendPtr+=4;
+						//SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
+						break;
+					case 5:
+						SMLComm.SendBuf[SMLComm.SendPtr++]=0x65;
+						if(0xaaaaaaaa==SMLOBISTab[OBISNo].Adder)
+						{
+							Get_P_Sig_time(&SMLComm.SendBuf[SMLComm.SendPtr]);
+						}
+						else 	if(0x55555555==SMLOBISTab[OBISNo].Adder)
+						{
+							Get_N_Sig_time(&SMLComm.SendBuf[SMLComm.SendPtr]);
+						}
+						else
+						{
+							tmp = Comm.SecPulseCnt-1;
+							memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],&tmp,4);
+							Cm_Ram_Inter(&SMLComm.SendBuf[SMLComm.SendPtr],4);
+						}
+						SMLComm.SendPtr+=4;
+						//SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
+						break;
+					case 6:
+						SMLComm.SendBuf[SMLComm.SendPtr++]=0x80|((64+2)>>4);
+						SMLComm.SendBuf[SMLComm.SendPtr++]=((64+2))&0xf;
+						if(0xaaaaaaaa==SMLOBISTab[OBISNo].Adder)
+						{
+							Get_P_Signature(&SMLComm.SendBuf[SMLComm.SendPtr]);
+						}
+						else 	if(0x55555555==SMLOBISTab[OBISNo].Adder)
+						{
+							Get_N_Signature(&SMLComm.SendBuf[SMLComm.SendPtr]);
+						}
+						SMLComm.SendPtr+=64;
+						break;
+					default:
+						SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
+						break;
+				}
+				SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
+			}
+			else
+				break;
+		}
+#if 0	
+  SMLComm.SendBuf[SMLComm.SendPtr]=0x73;
   SMLComm.SendPtr++;
 	
 	RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[5].OLStartAdd]),OrderRecord[5].OLLength);//写attri
@@ -1967,7 +2107,6 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
 		ret=smal_callbefore(0,&SMLComm.SendBuf[SMLComm.SendPtr]);
 		if(ret!=ReturnOK)
 		{
-			SMLComm.SendPtr--;
 			return ret;
 		}
 	}
@@ -2056,6 +2195,7 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
 	{
 		sml_callback(GetPropP_Req);
 	}
+#endif	
   return(ReturnOK);
   
 }	
