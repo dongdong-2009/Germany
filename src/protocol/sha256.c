@@ -29,9 +29,9 @@
 #else
 #include MBEDTLS_CONFIG_FILE
 #endif
-#define MBEDTLS_SHA256_C
-#define MBEDTLS_SELF_TEST
-#define MBEDTLS_PLATFORM_C
+//#define MBEDTLS_SHA256_C
+//#define MBEDTLS_SELF_TEST
+//#define MBEDTLS_PLATFORM_C
 #if defined(MBEDTLS_SHA256_C)
 
 #include "mbedtls/sha256.h"
@@ -325,11 +325,11 @@ void mbedtls_sha256_finish( mbedtls_sha256_context *ctx, unsigned char output[32
 /*
  * output = SHA-256( input buffer )
  */
-static mbedtls_sha256_context m_ctx256;
+//static mbedtls_sha256_context m_ctx256;
 void mbedtls_sha256( const unsigned char *input, size_t ilen,
              unsigned char output[32], int is224 )
 {
-   // mbedtls_sha256_context ctx;
+    mbedtls_sha256_context m_ctx256;
 
     mbedtls_sha256_init( &m_ctx256 );
     mbedtls_sha256_starts( &m_ctx256, is224 );
@@ -394,7 +394,7 @@ static const unsigned char sha256_test_sum[6][32] =
 /*
  * Checkup routine
  */
-static uint8_t buf[1024];
+//static uint8_t buf[1024];
 int mbedtls_sha256_self_test( int verbose )
 {
     int i, j, k, buflen, ret = 0;
@@ -402,7 +402,7 @@ int mbedtls_sha256_self_test( int verbose )
     unsigned char sha256sum[32];
     mbedtls_sha256_context ctx;
 
-  //  buf = mbedtls_calloc( 1024, sizeof(unsigned char) );
+    buf = mbedtls_calloc( 1024, sizeof(unsigned char) );
     if( NULL == buf )
     {
         //if( verbose != 0 )

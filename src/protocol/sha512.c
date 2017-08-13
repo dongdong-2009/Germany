@@ -359,17 +359,28 @@ void mbedtls_sha512_finish( mbedtls_sha512_context *ctx, unsigned char output[64
 /*
  * output = SHA-512( input buffer )
  */
-static mbedtls_sha512_context static_ctx;
+//static mbedtls_sha512_context static_ctx;
 void mbedtls_sha512( const unsigned char *input, size_t ilen,
              unsigned char output[64], int is384 )
 {
-   // mbedtls_sha512_context ctx;
+#if 1	
+    mbedtls_sha512_context static_ctx;
 
     mbedtls_sha512_init( &static_ctx );
     mbedtls_sha512_starts( &static_ctx, is384 );
     mbedtls_sha512_update( &static_ctx, input, ilen );
     mbedtls_sha512_finish( &static_ctx, output );
     mbedtls_sha512_free( &static_ctx );
+#else
+		mbedtls_sha512_context *static_ctx;
+		static_ctx = mbedtls_calloc( 1, sizeof(mbedtls_sha512_context) );
+    mbedtls_sha512_init( static_ctx );
+    mbedtls_sha512_starts( static_ctx, is384 );
+    mbedtls_sha512_update( static_ctx, input, ilen );
+    mbedtls_sha512_finish( static_ctx, output );
+    mbedtls_sha512_free( static_ctx );
+		mbedtls_free(static_ctx);
+#endif	
 }
 
 #if defined(MBEDTLS_SELF_TEST)

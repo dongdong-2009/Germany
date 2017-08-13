@@ -10,6 +10,7 @@
 #include "TypeE2p.h"
 extern SMLCOMM	SMLComm;
 extern ORDERRECORD	OrderRecord[16];
+extern SMLRECORD SMLRecord[8];
 struct S_Measure_{
 	uint64_t value;
 	uint32_t capture_time;
@@ -18,9 +19,9 @@ struct S_Measure_{
 };
 struct S_Measure_ m_Mesure;
 struct S_Measure_ m_Mesure_n;
-uint8_t sign_buf[128];
+uint8_t sign_buf[96];
 uint8_t signature_flag[2];
-void Cm_Signature(uint8_t *pri,uint8_t *in,uint32_t Len,uint8_t *out);
+void Cm_Signature(const uint8_t *pri,uint8_t *in,uint32_t Len,uint8_t *out);
 void Cm_Ram_Inter(uint8_t *buf,uint16_t Len);
 /*{
 	uint16_t i;
@@ -34,22 +35,26 @@ void Cm_Ram_Inter(uint8_t *buf,uint16_t Len);
 		buf[Len-1-i]=tmp;
 	}
 }*/
-/*uint8_t  data_sign_pri[32]={0x9D,0xEB,0xC6,0xDE,0x97,0x57,0xDE,0x9D,0x99,0x4E,0x45,0xFC,0xD8,0x5D,0x47,0x62,
-0xB0,0x28,0xFC,0x24,0x0D,0x14,0xA5,0xA0,0x2A,0x35,0x00,0x6E,0x59,0xDC,0xFD,0x07};*/
-uint8_t  data_sign_pri[32]={0x07,0xFD,0xDC,0x59,0x6E,0x00,0x35,0x2A,0xA0,0xA5,0x14,0x0D,0x24,0xFC,0x28,0xB0,
+#if 1
+const uint8_t  data_sign_pri[32]={0x9D,0xEB,0xC6,0xDE,0x97,0x57,0xDE,0x9D,0x99,0x4E,0x45,0xFC,0xD8,0x5D,0x47,0x62,
+0xB0,0x28,0xFC,0x24,0x0D,0x14,0xA5,0xA0,0x2A,0x35,0x00,0x6E,0x59,0xDC,0xFD,0x07};
+#else
+const uint8_t  data_sign_pri[32]={0x07,0xFD,0xDC,0x59,0x6E,0x00,0x35,0x2A,0xA0,0xA5,0x14,0x0D,0x24,0xFC,0x28,0xB0,
 0x62,0x47,0x5D,0xD8,0xFC,0x45,0x4E,0x99,0x9D,0xDE,0x57,0x97,0xDE,0xC6,0xEB,0x9D};
+#endif
 void Signature_Measure(void)
 {
 	//uint8_t privateK[32];
 	uint64_t tmp;
-	uint8_t *privateK;
+	const uint8_t *privateK;
 	//uint8_t flag;
+	//signature_flag[0]=1;
 	if(signature_flag[0] || signature_flag[1])
 	{	
 		//E2P_RData(privateK,E2P_PrivateKey,32);
 		//privateK=Cm_Get_ECC_Addr();
 		privateK=data_sign_pri;
-		memset(sign_buf,0,100);
+		memset(sign_buf,0,96);
 		E2P_RData(sign_buf,Server_ID,10);
 	}
 	//E2P_RData(&flag,E2P_OrderPlusA,1);
@@ -85,8 +90,10 @@ void Signature_Measure(void)
 		Cm_Ram_Inter(sign_buf+30,8);  //test
 		//Cm_Ram_Inter(sign_buf,96); //test
 		Cm_Signature(privateK,sign_buf,96,m_Mesure.signature_val);
+#if 0			
 		Cm_Ram_Inter(m_Mesure.signature_val,32);
 		Cm_Ram_Inter(m_Mesure.signature_val+32,32);
+#endif		
 	}
 	//E2P_RData(&flag,E2P_OrderDecA,1);
 	//if(flag)
@@ -122,8 +129,10 @@ void Signature_Measure(void)
 	Cm_Ram_Inter(sign_buf+30,8);
 //	Cm_Ram_Inter(sign_buf,96); //test
 	Cm_Signature(privateK,sign_buf,96,m_Mesure_n.signature_val);
+#if 0	
 	Cm_Ram_Inter(m_Mesure_n.signature_val,32);
 	Cm_Ram_Inter(m_Mesure_n.signature_val+32,32);
+#endif	
 	}
 }
 
@@ -135,7 +144,7 @@ uint8_t SetPrivateKey(uint16_t Flag)
 		keytext=Cm_Get_ECC_Addr();
 		E2P_RData(keytext,E2P_PrivateKey,32);
 		Cm_Ram_Inter(keytext,32);
-		Cm_Make_Public_Key();
+//		Cm_Make_Public_Key();
 	}
 	return ReturnOK;
 }
@@ -514,7 +523,12 @@ uint8_t GetEC_Pp0(unsigned char *input,unsigned char *output)
 	{
 		return ReturnERR03;
 	}
-	if(SMLComm.RecBuf[OrderRecord[5].OLStartAdd+2]==5)
+	/*memset(output,0,8);
+	output[7] = 123;*/
+#if 0	
+	memcpy(output,&Para.Pp0,8);
+#endif
+	if(SMLComm.RecBuf[OrderRecord[SMLRecord[1].record_num].OLStartAdd+2]==5)
 	{
 		*(output-1)=0x65;
 		tmp=Comm.SecPulseCnt-1;
@@ -522,14 +536,32 @@ uint8_t GetEC_Pp0(unsigned char *input,unsigned char *output)
 		Cm_Ram_Inter(output,4);
 		SMLComm.SendPtr-=4;
 	}
+	else if(SMLComm.RecBuf[OrderRecord[SMLRecord[1].record_num].OLStartAdd+2]==3)
+	{
+	/*	
+		*(output-1)=0x72;
+		*(output)=0x62;*(output+1)=0x01;*/
+		
+		*(output-1)=0x72;
+		*(output)=0x62;*(output+1)=0x03;
+		*(output+2)=0x72;
+		*(output+3)=0x62;*(output+4)=0x01;
+		*(output+5)=0x72;
+		*(output+6)=0x52;*(output+7)=0xff;
+		*(output+8)=0x62;*(output+9)=Unit_Wh;
+		SMLComm.SendPtr+=2;
+	}
 	else
 	{
-		/*memset(output,0,8);
-		output[7] = 123;*/
-		memcpy(output,&Para.Pp0,8);
+		memset(output,0,8);
+	//*(unsigned long *)(output+4)=BCD4_Long(Para.Pp0);
+		tmp = BCD2_Word(Para.Pp0+4)*100000000;
+		tmp +=BCD4_Long(Para.Pp0);
+		tmp = tmp*10;
+		memcpy(output,&tmp,8);
 		Cm_Ram_Inter(output,8);
-		//ID_Read(output,0x0001,8);
 	}
+	//ID_Read(output,0x0001,8);
 	return ReturnOK;
 }
 
@@ -546,7 +578,11 @@ uint8_t GetEC_Pn0(unsigned char *input,unsigned char *output)
 	{
 		return ReturnERR03;
 	}
-	if(SMLComm.RecBuf[OrderRecord[5].OLStartAdd+2]==5)
+	//ID_Read(output,0x000A,8);
+#if 0	
+	memcpy(output,&Para.Pn0,8);
+#endif
+	if(SMLComm.RecBuf[OrderRecord[SMLRecord[1].record_num].OLStartAdd+2]==5)
 	{
 		*(output-1)=0x65;
 		tmp=Comm.SecPulseCnt-1;
@@ -554,10 +590,25 @@ uint8_t GetEC_Pn0(unsigned char *input,unsigned char *output)
 		Cm_Ram_Inter(output,4);
 		SMLComm.SendPtr-=4;
 	}
+	else if(SMLComm.RecBuf[OrderRecord[SMLRecord[1].record_num].OLStartAdd+2]==3)
+	{
+		*(output-1)=0x72;
+		*(output)=0x62;*(output+1)=0x03;
+		*(output+2)=0x72;
+		*(output+3)=0x62;*(output+4)=0x01;
+		*(output+5)=0x72;
+		*(output+6)=0x52;*(output+7)=0xff;
+		*(output+8)=0x62;*(output+9)=Unit_Wh;
+		SMLComm.SendPtr+=2;
+	}
 	else
 	{
-		//ID_Read(output,0x000A,8);
-		memcpy(output,&Para.Pn0,8);
+		memset(output,0,8);
+		//*(unsigned long *)(output+4)=BCD4_Long(Para.Pn0);
+		tmp = BCD2_Word(Para.Pn0+4)*100000000;
+		tmp +=BCD4_Long(Para.Pn0);
+		tmp = tmp*10;
+		memcpy(output,&tmp,8);
 		Cm_Ram_Inter(output,8);
 	}
 	return ReturnOK;
@@ -676,20 +727,24 @@ uint8_t GetU_back(uint16_t Flag)
 {
 	if(Flag==GetPropP_Req)
 	{
-		SMLComm.SendBuf[++SMLComm.SendPtr]=0x73;
-		++SMLComm.SendPtr;
-		RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[6].OLStartAdd]),OrderRecord[6].OLLength);//дattri
-		SMLComm.SendPtr+=OrderRecord[6].OLLength;
-		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
-		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
-		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
-		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x03;
-		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
-		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
-		SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
-		SMLComm.SendBuf[SMLComm.SendPtr++]=0x52;SMLComm.SendBuf[SMLComm.SendPtr++]=0xff;
-		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=Unit_V;
-		SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
+		if(OrderRecord[SMLRecord[1].record_num+1].OLStartAdd && OrderRecord[SMLRecord[1].record_num+1].OLLength==3)
+		{
+			SMLComm.SendBuf[++SMLComm.SendPtr]=0x73;
+			++SMLComm.SendPtr;
+			RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[6].OLStartAdd]),OrderRecord[6].OLLength);//дattri
+			SMLComm.SendPtr+=OrderRecord[6].OLLength;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x03;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
+			//SMLComm.SendBuf[SMLComm.SendPtr++]=0x52;SMLComm.SendBuf[SMLComm.SendPtr++]=0x00;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x52;SMLComm.SendBuf[SMLComm.SendPtr++]=0xff;//0xfe;
+			SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=Unit_V;
+			SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
+		}
 	}
 	return ReturnOK;
 }
@@ -734,6 +789,7 @@ uint8_t GetP_back(uint16_t Flag)
 {
 	int i;
 	unsigned short short_Name;
+	unsigned int tmp;
 	if(Flag==GetPropP_Req)
 	{
 		for(i=6;i<9;++i)
@@ -772,6 +828,7 @@ uint8_t GetP_back(uint16_t Flag)
 							SMLComm.SendBuf[SMLComm.SendPtr++]=0x65;
 
 							memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],&Para.meter_sts,4);
+							Cm_Ram_Inter(&SMLComm.SendBuf[SMLComm.SendPtr],4);
 							SMLComm.SendPtr+=4;
 						SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
 						break;
@@ -784,7 +841,8 @@ uint8_t GetP_back(uint16_t Flag)
 						SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;
 						SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
 						SMLComm.SendBuf[SMLComm.SendPtr++]=0x65;
-							memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],&Comm.SecPulseCnt,4);
+						tmp = Comm.SecPulseCnt-1;
+							memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],&tmp,4);
 							Cm_Ram_Inter(&SMLComm.SendBuf[SMLComm.SendPtr],4);
 							SMLComm.SendPtr+=4;
 						SMLComm.SendBuf[SMLComm.SendPtr]=0x01;

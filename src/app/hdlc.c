@@ -30,10 +30,10 @@ uint8_t b_Hdlc_buf[1024]={0x7E,0xA0,0x74,0x88,0x03,0x02,0x03,0x10,0xAA,0xC6,0x16
 0x00,0x00,0x00,0x0D,0x00,0x08,0x00,0x06,0x04,0x03,0x05,0x03,0x06,0x03,0x00,0x0F,
 0x00,0x01,0x01,0x65,0xD8,0x7E};
 #else
-uint8_t b_Hdlc_buf[1024];
+uint8_t b_Hdlc_buf[768];
 #endif
 
-uint8_t b_Hdlc_sendbuf[1024];
+uint8_t b_Hdlc_sendbuf[576];
 #if 0
 uint8_t sml_test[256]={0x1B,0x1B,0x1B,0x1B,0x01,0x01,0x01,0x01,0x76,0x05,0x01,0x02,0x03,0x04,0x62,0x00,
 0x62,0x00,0x72,0x65,0x00,0x00,0x01,0x01,0x76,0x01,0x0B,0x45,0x53,0x2D,0x48,0x44,
@@ -47,12 +47,12 @@ uint8_t sml_test[256]={0x1B,0x1B,0x1B,0x1B,0x01,0x01,0x01,0x01,0x76,0x05,0x01,0x
 0x00,0x02,0x01,0x71,0x01,0x63,0xBB,0xB5,0x00,0x00,0x00,0x00,0x1B,0x1B,0x1B,0x1B,
 0x1A,0x03,0x11,0x9B};
 #endif
-uint8_t pre_hdlc_buf[512];
+uint8_t pre_hdlc_buf[384];
 uint32_t pre_hdlc_len;
 uint8_t mcu_busy;
 uint8_t ControlByte,oldControlByte;
 uint8_t Connected;
-uint8_t b_short_frame[16];
+uint8_t b_short_frame[64];
 struct S_Hdlc_LMN_Info m_lmn_info;
 extern SMLCOMM	SMLComm;
 uint8_t ui_flag;
@@ -191,6 +191,7 @@ uint16_t Cm_Handle_Assign_Addr(uint8_t* buf,uint16_t len)
 	}
 	if(flag)
 	{
+		i_Meter_Prot=HLDC_UI_PROTOCOL_ADDR_VERIFY;
 		return 0;
 	}
 	//m_lmn_info.b_hdlc_slot=Addr_Num+1;
@@ -286,7 +287,8 @@ int16_t Hdlc_Check(uint8_t *buf,uint16_t len)
 	ret=len;
 	for(i=0;(i)<len;++i)
 	{
-		if((buf[i]!=0x7e) || ((buf[i+1]&0xF0)!=0xA0))
+		//if((buf[i]!=0x7e) || ((buf[i+1]&0xF0)!=0xA0))
+		if((buf[i]!=0x7e) || ((buf[i+1]&0xF0)!=0xA0) || (((buf[i+3]>>1)!=i_Meter_Addr) && ((buf[i+3]>>1)!=0x7f)) )
 		{
 			ret--;
 			continue;
@@ -351,6 +353,29 @@ void HDLC_Send_RNR(void)
 	b_short_frame[10] = 0x7e;
 	HDLC_WRITE(b_short_frame,11);
 }
+
+void HDLC_Send_UI(void)
+{
+	uint16_t i_crc;
+  b_short_frame[0]=0x7e;
+	b_short_frame[1] = 0xA0 | (((32+11))>>8)&0x3f;
+	b_short_frame[2]=(((32+11)))&0xff;
+	b_short_frame[4]=(2<<1)|0x1;
+	b_short_frame[5]=(i_Meter_Addr<<1)&0xFE;
+	b_short_frame[6]=(2<<1)|0x1;
+	b_short_frame[7]=HDLC_UI;
+	i_crc = DoCrc16(0xffff,b_short_frame+1,6);
+	b_short_frame[8] = i_crc&0xff;
+	b_short_frame[9] = (i_crc>>8)&0xff;
+	RAM_Write(b_short_frame+10,(uint8_t *)&m_lmn_info,32);
+	i_crc = DoCrc16(0xffff,b_short_frame+1,41);
+	b_short_frame[42] = i_crc&0xff;
+	b_short_frame[43] = (i_crc>>8)&0xff;
+	b_short_frame[44]=0x7E;
+	//i_crc=HDLC_Assemble(b_short_frame,32);
+	HDLC_WRITE(b_short_frame,45);
+}
+
 uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 {
 	uint16_t ptr;
@@ -501,11 +526,13 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 		//	SetKeyTime(120);
 			ui_flag=1;
 			buf[ptr++]=HDLC_UA;
+#if 0		
 			if(i_Meter_Prot==HDLC_I_PROTOCOL_TLS_COSEM)
 			{
 				SetKeyTime(120);
 				Close_tls();
 			}
+#endif			
 		#if 0
 		  buf[10+Len]=0x81;Len++;
 			buf[10+Len]=0x80;Len++;
@@ -529,8 +556,9 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 		default:
 			//b_seq=0x10;
 			//buf[ptr++]=HDLC_DM;
-			buf[ptr++]=HDLC_RR|((b_seq)&0xf0);
-			break;
+			return 0;
+		//	buf[ptr++]=HDLC_RR|((b_seq)&0xf0);
+			//break;
 	}
 	i_crc = DoCrc16(0xffff,buf+1,ptr-1);
 	buf[ptr++] = i_crc&0xff;
@@ -558,6 +586,14 @@ void CM_HDLC_Receive(void)
 //	uint8_t seqbak;
 	//uint8_t ControlByte;
 	//uint8_t *send_ptr;
+	if(ms_count>30000)
+	{
+		Connected=0;
+		m_lmn_info.b_hdlc_LMN_Addr=3;
+		Close_tls();
+	//	Reset_Certificate();
+		ms_count=0;
+	}
 #ifdef TEST	
 	if(hdlc_back)
 	{
@@ -578,11 +614,11 @@ void CM_HDLC_Receive(void)
 		ControlByte=HDLC_I;
 	}
 #endif	
-	i_rx_length=1024-i_rx_len;
-	if(i_rx_length>1024)
+	i_rx_length=768-i_rx_len;
+	if(i_rx_length>768)
 	{
 		i_rx_len=0;
-		i_rx_length=1024;
+		i_rx_length=768;
 	}
 	i_rx_length=HDLC_READ(b_Hdlc_buf+i_rx_len,i_rx_length);
 	/*if(i_rx_len)
@@ -601,7 +637,7 @@ void CM_HDLC_Receive(void)
 	#if 1 //test delete
 	if(i_rx_length==0)
 	{
-		if((ms_count&0xffffff00) && i_rx_len)
+		if((ms_count&0xfffffff0) && i_rx_len)
 			i_rx_len=0;
 		return;
 	}
@@ -768,6 +804,7 @@ void CM_HDLC_Receive(void)
 				b_seq = (((b_Hdlc_buf[7]>>5)&7)<<1) | ((((b_Hdlc_buf[7]>>1))&7)<<5);
 			  b_seq +=0x20;
 		//	b_seq = (((((b_seq>>5)&0x7)+1)%8)<<5) | (b_seq&0x1e);
+#if 1			
 #if 0		 //TEST delete	
 			ControlByte=HDLC_RNR;
 			i_send_length=HDLC_Assemble(b_short_frame,0);
@@ -775,11 +812,14 @@ void CM_HDLC_Receive(void)
 			ControlByte=HDLC_I;
 #else
 			HDLC_Send_RNR();
-#endif			
+#endif
+#endif
 			switch(i_Meter_Prot)
 			{
 				case HDLC_I_PROTOCOL_TLS_COSEM:
+					mcu_busy=1;
 					i_send_len=Cm_Tls_Analys(b_Hdlc_buf+10,i_rx_length,b_Hdlc_sendbuf+10,&hdlc_back);
+					mcu_busy=0;
 					#if 0				
 					if(hdlc_back)
 					{
@@ -890,8 +930,8 @@ void CM_HDLC_Receive(void)
 		else if(LMN_Addr==0x7F  && ControlByte==HDLC_UI) //¹ã²¥µØÖ·
 		{
 		//	ms_count=0;
-			i_send_len=0;
-			hdlc_back=0;
+			//i_send_len=0;
+			//hdlc_back=0;
 		//	gprs_ms=6;
 			i_send_length=Cm_Handle_Assign_Addr(b_Hdlc_buf+10,i_rx_length);
 			//mdelay(50);
@@ -910,9 +950,9 @@ void CM_HDLC_Receive(void)
 				default:
 					return;
 			}
-			RAM_Write(b_Hdlc_sendbuf+10,(uint8_t *)&m_lmn_info,32);
-			i_send_length=HDLC_Assemble(b_Hdlc_sendbuf,32);
-			HDLC_WRITE(b_Hdlc_sendbuf,i_send_length);
+			RAM_Write(b_short_frame+10,(uint8_t *)&m_lmn_info,32);
+			i_send_length=HDLC_Assemble(b_short_frame,32);
+			HDLC_WRITE(b_short_frame,i_send_length);
 #else
 			//i_send_length=Cm_Handle_Assign_Addr(b_Hdlc_buf+10,i_rx_length);
 			//if(((i_Meter_Prot==HDLC_UI_PROTOCOL_ADDR_ASSIGN)&&i_send_length) || ((i_Meter_Prot==HLDC_UI_PROTOCOL_ADDR_VERIFY)&&(i_send_length==0)))

@@ -190,6 +190,8 @@ int16_t Sym3(uint8_t *recvbuf,uint8_t *sendbuf,uint16_t len)
 				ret=500;
 			memcpy(b_lmn_cert,recvbuf+9,ret);*/
 			ecc_addr=Cm_Get_ECC_Addr();
+			memcpy(ecc_addr,recvbuf+ret+20,recvbuf[ret+19]);
+#if 0				
 			memcpy(ecc_addr,recvbuf+ret+20,32);    //+9+ret+4+7
 			//E2P_WData( PublicKey_Y,recvbuf+ret+70,64);
 			for(len=0;len<16;++len)
@@ -198,8 +200,9 @@ int16_t Sym3(uint8_t *recvbuf,uint8_t *sendbuf,uint16_t len)
 				ecc_addr[31-len] ^= ecc_addr[len];
 				ecc_addr[len] ^= ecc_addr[31-len];
 			}
-			E2P_WData( E2P_PrivateKey,ecc_addr,32);
-			Cm_Make_Public_Key();
+#endif			
+			E2P_WData( E2P_PrivateKey,ecc_addr,recvbuf[ret+19]);
+//			Cm_Make_Public_Key();
 			E2P_WData( E2P_LMN_Certi,recvbuf+9,ret+4);
 		}
 	//	else

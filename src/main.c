@@ -90,9 +90,10 @@ void ProcSec(void)
 	Cm_Ram_Inter((uint8_t *)&m_me,8);
 	E2P_WData(CMon_EC_Pn0,&m_me,8);
 #endif	
-/*	Para.Pp0++;
+	Para.Pp0++;
 	Para.Pn0++;
-	Para.Ua=220;
+	Para.meter_sts |= (1<<8)|(1<<18)|(1<<19)|(1<<20);
+/*	Para.Ua=220;
 	Para.Ub=221;
 	Para.Uc=219;
 	Para.Pt=2000;*/
@@ -150,10 +151,12 @@ uint32_t tx_seq=0x1;
 extern	struct S_Hdlc_LMN_Info m_lmn_info;
 	extern	int mbedtls_aes_self_test( int verbose );
 #endif
+#if 0	
 	extern	struct S_Hdlc_LMN_Info m_lmn_info;
 	extern uint32_t ms_count;
 	extern uint8_t keytext[16];
 	extern uint8_t Kenc[16],Kmac[16],Lenc[16],Lmac[16];
+#endif	
 	#if 0
 unsigned char plaintext1[576]={
 0x03,0x00,0x00,0x02,0x29,0x00,0x00,0x01,0x67,0x18,0xC6,0xEC,0x7C,0x09,0x06,0x97,
@@ -457,7 +460,7 @@ int  main ( void )
 {
 //	unsigned short i;
 	//const struct uECC_Curve_t * p_curve;
-   int16_t i,j;
+ //  int16_t i,j;
 	// uint8_t test_buf[16];
 	// uint8_t key1[16];
 	// uint8_t plaintext1[32];
@@ -494,7 +497,7 @@ int  main ( void )
 	//unsigned char plaintext1[64]={0x85,0x00,0x00,0x00,0x29,0x00,0x00,0x01,0x6C,0xD5,0x20,0x33,0xFE,0x20,0xE2,0x5A,0x3F,0xA9,0x5D,0xCD,0x48,0xE1,0x0C,0xF0,0x7A};
 		//	unsigned char T[16];
 	__disable_irq();
-	
+	//cacheOff();
 #if 0
 	SYSCTL->SYS_PS = 0x82;
 	SYSCTL->MOD1_EN = 0xa5800fe0;

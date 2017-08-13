@@ -55,7 +55,7 @@ void fnUSART5_Init(unsigned char Cfg)
 	//GPIO->PCA0 |=0x02000000;		//GPIO选择UART0
 	PinMode_DualRX(GPIO_MODE_IN);
 	PinMode_DualTX(GPIO_MODE_OUT);
-	Comm8213.Ptr8213=0;
+//	Comm8213.Ptr8213=0;
 
 			UART5->CTRL &=0xfffd;		//屏蔽发送中断
 			UART5->STA = 0x02;		//清发送中断标志

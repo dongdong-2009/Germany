@@ -11,6 +11,9 @@
 #include "sml.h"
 #include "mbedtls/sha512.h"
 #include "mbedtls/sha256.h"
+#include "mbedtls/ecp.h"
+#include "mbedtls/ecdsa.h"
+#include "mbedtls/oid.h"
 void __private_tls_prf(struct TLSContext *context,
                        unsigned char *output, unsigned int outlen, const unsigned char *secret, const unsigned int secret_len,
                        const unsigned char *label, unsigned int label_len, unsigned char *seed, unsigned int seed_len,
@@ -139,6 +142,8 @@ uint32_t htonl(uint32_t hostlong)
 uint16_t htons(uint16_t hostshort)
 {
 	uint16_t nshort;
+	if(hostshort==0)
+		return 0;
 	nshort=hostshort&0xff;
 	nshort=(nshort<<8)+((hostshort>>8)&0xff);
 	return nshort;
@@ -181,8 +186,8 @@ struct TLSContext {
 		uint32_t crypto_time;
 		unsigned char *message_buffer;
 		unsigned int message_buffer_len;
-		unsigned char priv[32];
-		unsigned char ecc_priv[48];
+		unsigned char priv[64];
+		unsigned char ecc_priv[64];
 		unsigned char public_key[64];
 		unsigned char share_key[32];
 		unsigned char aes_key[16];
@@ -201,6 +206,7 @@ struct TLSContext {
 		mbedtls_sha256_context sha256;
 		uint8_t sha256_init;
 		uint8_t tls_sml;
+		mbedtls_ecp_group_id grp_id;
 };
 
 struct TLSPacket {
@@ -214,7 +220,9 @@ struct TLSPacket {
 //static struct TLSContext m_tlscontext;
 struct TLSContext m_tlscontext;
 const struct uECC_Curve_t * p_curve;
-#if 1
+//#define TEST
+//#define UECC_TEST
+#ifdef TEST
 uint8_t hash_test_buff[64]={0x7C,0x3E,0x88,0x3D,0xDC,0x8B,0xD6,0x88,0xF9,0x6E,0xAC,0x5E,0x93,0x24,0x22,0x2C,
 0x8F,0x30,0xF9,0xD6,0xBB,0x59,0xE9,0xC5,0xF0,0x20,0xBD,0x39,0xBA,0x2B,0x83,0x77};
 #if 1
@@ -261,7 +269,10 @@ uint8_t srv_random[32]={
 0x21,0x60,0xFC,0x9F,0xCF,0x76,0x5A,0xA5,0x5D,0xEC,0x98,0x0B,0xCB,0xC2,0xB6,0xD1
 };
 
-uint8_t decompress_test[64]={
+uint8_t decompress_test[68]={
+#ifndef UECC_TEST//for embedtls
+0x04,
+#endif	
 0x89,0xC4,0xFA,0x5A,0xB6,0xEF,0x71,0xEF,0xE2,0x2B,0x4F,0x6F,0xB0,0xBB,0x90,0xBF,
 0x5A,0x2D,0x9E,0x73,0xF6,0xF4,0xF6,0x19,0xE2,0xE5,0x96,0xEF,0xA5,0x9C,0x26,0xB1,
 0x77,0xB0,0xFF,0xCF,0x2E,0x21,0x4A,0x5D,0x93,0x6D,0xD0,0xC1,0x14,0xEE,0x0C,0x19,
@@ -302,6 +313,7 @@ void Cm_Make_Public_Key(void)
 	Cm_Ram_Inter(m_tlscontext.public_key+32,32);
 	E2P_WData(PublicKey_Y,m_tlscontext.public_key,64);
 #endif	
+	return;
 }
 
 const uint8_t initKey[16]={0xA4,0x45,0x7D,0x73,0xF3,0xA8,0xED,0x56,0xB7,0x22,0x68,0xD9,0xB5,0x23,0x0F,0x7A};
@@ -446,10 +458,58 @@ uint8_t m_cipher[80]={0xB0,0xDA,0xBC,0x89,0xE6,0x54,0x01,0x11,0xE4,0x75,0xCF,0xE
 0x5A,0xB4,0x58,0x09,0x61,0x71,0x32,0x97,0x29,0x7B,0x41,0xC8,0x66,0x76,0x9B,0xA6,
 0x5A,0x84,0x2C,0x46,0x6B,0xE8,0x1D,0xBD,0x50,0x8A,0x52,0x50,0xD0,0x46,0x15,0x86};
 #endif
-void Cm_Signature(uint8_t *pri,uint8_t *in,uint32_t Len,uint8_t *out)
+
+
+int Gen_Random(void *n, unsigned char *buf, size_t Len)
+{
+	int i;
+	for (i = 0; i < Len; i++)
+	{
+		buf[i] = rand()%256;
+	}
+	return 0;
+}
+//#pragma pack (4) 
+const unsigned char b_pri[32]={0x9D,0xEB,0xC6,0xDE,0x97,0x57,0xDE,0x9D,0x99,0x4E,0x45,0xFC,0xD8,0x5D,0x47,0x62,
+0xB0,0x28,0xFC,0x24,0x0D,0x14,0xA5,0xA0,0x2A,0x35,0x00,0x6E,0x59,0xDC,0xFD,0x07};
+//mbedtls_mpi_uint pri_key[8];
+mbedtls_mpi m;
+mbedtls_ecp_point R;
+mbedtls_ecp_group grp;
+mbedtls_mpi r;
+mbedtls_mpi s;
+int mbedTls_Test(mbedtls_ecp_group_id grpid)
+{
+
+	int ret,i;
+	ret=mbedtls_ecp_group_load( &grp, grpid);
+//	m.p=pri_key;
+ // m.n=8;
+	mbedtls_mpi_read_binary(&m,b_pri,32);
+	ret=mbedtls_ecp_check_privkey(&grp,&m);
+	ret=mbedtls_ecp_mul(&grp,&R,&m, &grp.G, Gen_Random,NULL);//生成公钥
+	mbedtls_ecp_point_write_binary(&grp,&R,MBEDTLS_ECP_PF_COMPRESSED,&i,m_tlscontext.public_key,64);
+	mbedtls_ecp_group_free( &grp );
+  mbedtls_ecp_point_free( &R );
+  mbedtls_mpi_free( &m );
+	return ret;
+}
+
+void Cm_Signature(const uint8_t *pri,uint8_t *in,uint32_t Len,uint8_t *out)
 {
 	mbedtls_sha256(in,Len,sign_out,0);
+#ifdef UECC_TEST	
 	uECC_sign(pri,sign_out,32,out,p_curve);
+#else
+	if(grp.id!=MBEDTLS_ECP_DP_ANSIP256R1)
+	{
+		mbedtls_ecp_group_load( &grp, MBEDTLS_ECP_DP_ANSIP256R1);
+	}
+	mbedtls_mpi_read_binary(&m,pri,32);
+	mbedtls_ecdsa_sign(&grp,&r, &s,&m,sign_out,32,Gen_Random,NULL);
+	mbedtls_mpi_write_binary(&r,out,32);
+	mbedtls_mpi_write_binary(&s,out+32,32);
+#endif	
 /*	uECC_compute_public_key(pri,m_tlscontext.public_key,p_curve);
 	Cm_Ram_Inter(m_tlscontext.public_key,32);
 	Cm_Ram_Inter(m_tlscontext.public_key+32,32);
@@ -464,20 +524,24 @@ int tls_Init(void)
 														 0x3f,0x04,0xd7,0xd6,0x85,0x1b,0xf6,0x34,0x9f,0x2d,0x7d,0x5b,0x34,0x52,0xb3,0x8a};*/
 	// SHA512_HashContext ctx;
 //	SHA256_HashContext ctx;
-	 unsigned char b_pri[32]={0x9D,0xEB,0xC6,0xDE,0x97,0x57,0xDE,0x9D,0x99,0x4E,0x45,0xFC,0xD8,0x5D,0x47,0x62,
-0xB0,0x28,0xFC,0x24,0x0D,0x14,0xA5,0xA0,0x2A,0x35,0x00,0x6E,0x59,0xDC,0xFD,0x07};
+	 //unsigned char b_pri[32]={0x9D,0xEB,0xC6,0xDE,0x97,0x57,0xDE,0x9D,0x99,0x4E,0x45,0xFC,0xD8,0x5D,0x47,0x62,
+//0xB0,0x28,0xFC,0x24,0x0D,0x14,0xA5,0xA0,0x2A,0x35,0x00,0x6E,0x59,0xDC,0xFD,0x07};
 #if 0	
 		unsigned char b_pri[32]={0x70,0xA1,0x2C,0x2D,0xB1,0x68,0x45,0xED,0x56,0xFF,0x68,0xCF,0xC2,0x1A,0x47,0x2B,
 0x3F,0x04,0xD7,0xD6,0x85,0x1B,0xF6,0x34,0x9F,0x2D,0x7D,0x5B,0x34,0x52,0xB3,0x8A};
 #endif	
-		
-		uint8_t *ptr;
+#ifdef TEST
 		uint8_t publicK[64];
+		int i;
+#endif
+		uint8_t *ptr;
+		
 		uint8_t *b_lmn_cert;
 		uint64_t squence_number;
 		uint64_t result;
 		squence_number = 0x14890;
 		result = htonll(squence_number);
+//		result=mbedTls_Test(MBEDTLS_ECP_DP_SECP256R1);
 //		unsigned int i;
 		b_lmn_cert=Get_LMN_Cert();
 
@@ -487,13 +551,14 @@ int tls_Init(void)
 		
 		uECC_set_rng(ecc_rng);
 		p_curve = uECC_secp256r1();
-		Cm_Ram_Inter(b_pri,32);
-		uECC_compute_public_key(b_pri,m_tlscontext.public_key,p_curve);
+		memcpy(sign_out,b_pri,32);
+		Cm_Ram_Inter(sign_out,32);
+		uECC_compute_public_key(sign_out,m_tlscontext.public_key,p_curve);
 		Cm_Ram_Inter(m_tlscontext.public_key,32);
 		Cm_Ram_Inter(m_tlscontext.public_key+32,32);
 		E2P_WData(PublicKey_Y,m_tlscontext.public_key,64);
 //		CmDeAES128(m_serverkey,m_serveriv,0,m_cipher,80,sign_out);
-#if 0
+#ifdef TEST
 		
 #if 1
 #if 1
@@ -526,35 +591,75 @@ int tls_Init(void)
 #if 1		
 	//	mbedtls_sha512(b_lmn_cert,101,hash_test_buff,0);
 		mbedtls_sha512(b_lmn_cert,i,hash_test_buff,0);
+		fnWDT_Restart();
+#ifdef UECC_TEST //for uEcc		
 		Cm_Ram_Inter(hash_test_buff,32);
 		Cm_Ram_Inter(hash_test_buff+32,32);
+#endif		
 #else
 		mbedtls_sha256(b_lmn_cert,101,hash_test_buff,0);
 		Cm_Ram_Inter(hash_test_buff,32);
 #endif
 		fnWDT_Restart();
 	//	mbedtls_sha512(b_lmn_cert,128,hash_test_buff,0);
-	
+#ifdef UECC_TEST //for uEcc	
 		//use signature public_key
 		Cm_Ram_Inter(decompress_test,32);
 		Cm_Ram_Inter(decompress_test+32,32);
+#else   //for embedtls
+		mbedtls_ecp_group_load( &grp, MBEDTLS_ECP_DP_SECP256R1);
+		result=mbedtls_ecp_point_read_binary(&grp,&R,decompress_test,65);
+#endif
 		
 #if 0 	//use share public_key	
-	
 		fnWDT_Restart();
 		uECC_decompress(compress_test,(uint8_t *)decompress_test,p_curve);
 #endif
 
 		fnWDT_Restart();
+#ifdef UECC_TEST //for uEcc
 		Cm_Ram_Inter(ecsda_test,32);
 		fnWDT_Restart();
 		Cm_Ram_Inter(ecsda_test+32,32);
-		
+#else  //for embedtls
+		mbedtls_mpi_read_binary(&r,ecsda_test,32);
+		mbedtls_mpi_read_binary(&s,ecsda_test+32,32);
+#endif		
 		fnWDT_Restart();
-#if 1		
-		uECC_verify(decompress_test,hash_test_buff,64,ecsda_test,p_curve);
+#if 1
+#ifdef UECC_TEST //for uEcc
+		result=uECC_verify(decompress_test,hash_test_buff,64,ecsda_test,p_curve);
 #else
-		uECC_verify(decompress_test,hash_test_buff,32,ecsda_test,p_curve);
+		result=mbedtls_ecdsa_verify(&grp,hash_test_buff,64,&R,&r,&s);
+		//自己生成签名自己解签
+		//mbedtls_ecp_group_free( &grp );
+		mbedtls_ecp_point_free( &R );
+		mbedtls_mpi_free( &m );
+		mbedtls_mpi_free( &r);
+		mbedtls_mpi_free( &s );
+		mbedtls_mpi_read_binary(&m,b_pri,32);
+		fnWDT_Restart();
+		mbedtls_ecp_mul(&grp,&R,&m, &grp.G, Gen_Random,NULL);//生成公钥
+		fnWDT_Restart();
+		//mbedtls_ecdsa_sign_det(&grp,&r, &s,&m,b_lmn_cert,i,MBEDTLS_MD_SHA512);
+		mbedtls_ecdsa_sign(&grp,&r, &s,&m,hash_test_buff,64,Gen_Random,NULL);
+		mbedtls_mpi_write_binary(&r,sign_out,32);
+		mbedtls_mpi_write_binary(&s,sign_out+32,32);
+		mbedtls_mpi_free( &r);
+		mbedtls_mpi_free( &s );
+		mbedtls_mpi_read_binary(&r,sign_out,32);
+		mbedtls_mpi_read_binary(&s,sign_out+32,32);
+		fnWDT_Restart();
+		result=mbedtls_ecdsa_verify(&grp,hash_test_buff,64,&R,&r,&s);
+		fnWDT_Restart();
+		mbedtls_ecp_point_free( &R );
+		mbedtls_mpi_free( &m );
+		mbedtls_mpi_free( &r);
+		mbedtls_mpi_free( &s );
+#endif
+#else
+		result=uECC_verify(decompress_test,hash_test_buff,32,ecsda_test,p_curve);
+		
 #endif
 		fnWDT_Restart();
 #else
@@ -629,11 +734,13 @@ int tls_Init(void)
 		E2P_WData(PublicKey_Y,publicK,32);
 #else		
 		E2P_RData(m_tlscontext.ecc_priv,E2P_PrivateKey,32);
+#if 0		
 		uECC_compute_public_key(m_tlscontext.ecc_priv,(uint8_t *)publicK,p_curve);
-		Cm_Make_Public_Key();
-		E2P_RData(b_lmn_cert,E2P_LMN_Certi,500);
+#endif		
+//		Cm_Make_Public_Key();
+		E2P_RData(b_lmn_cert,E2P_LMN_Certi,511);
 		b_lmn_cert=Get_SMGW_Cert();
-		E2P_RData(b_lmn_cert,E2P_SMGW_Certi,500);
+		E2P_RData(b_lmn_cert,E2P_SMGW_Certi,255);
 		
 #endif		
 		fnWDT_Restart();
@@ -654,6 +761,48 @@ int tls_Init(void)
 		Cm_Ram_Inter(public_key_for_share+32,32);
 		uECC_valid_public_key(public_key_for_share,p_curve);
 #endif
+#if 0 //共享密钥测试
+		if (1 == uECC_make_key((unsigned char *)m_tlscontext.public_key,(unsigned char *)privateK,p_curve))
+		{
+		}
+		
+		mbedtls_ecp_group_load( &grp, MBEDTLS_ECP_DP_SECP256R1);
+		mbedtls_ecp_gen_keypair(&grp,&m,&R,Gen_Random,NULL);
+		
+		mbedtls_ecp_point_write_binary(&grp,&R,MBEDTLS_ECP_PF_UNCOMPRESSED,(size_t*)&result,sign_out,80);
+		mbedtls_ecp_point_free(&R);
+		
+		memcpy(m_tlscontext.server_verify_data+1,m_tlscontext.public_key,64);
+		m_tlscontext.server_verify_data[0]=0x04;
+		memcpy(m_tlscontext.public_key,sign_out+1,64);
+		
+		Cm_Ram_Inter(m_tlscontext.public_key,32);
+		Cm_Ram_Inter(m_tlscontext.public_key+32,32);
+		
+		Cm_Ram_Inter(m_tlscontext.server_verify_data+1,32);
+		Cm_Ram_Inter(m_tlscontext.server_verify_data+33,32);
+		mbedtls_ecp_point_read_binary(&grp,&R,m_tlscontext.server_verify_data,65);
+		
+		uECC_shared_secret(m_tlscontext.public_key,m_tlscontext.priv,m_tlscontext.share_key,p_curve);
+		mbedtls_ecdh_compute_shared(&grp,&r,&R,&m,Gen_Random,NULL);
+		mbedtls_mpi_write_binary(&r,sign_out,32);
+		fnWDT_Restart();
+		mbedtls_ecp_point_free( &R );
+		mbedtls_mpi_free( &m );
+		mbedtls_mpi_free( &r);
+		mbedtls_mpi_free( &s );
+		mbedtls_ecp_group_free(&grp);
+		
+		result=mbedtls_ecp_group_load( &grp, MBEDTLS_ECP_DP_ANSIP256R1);
+	//	result=mbedtls_ecp_gen_keypair(&grp,&m,&R,Gen_Random,NULL);
+		mbedtls_mpi_read_binary(&m,b_pri,32);
+		result=mbedtls_ecp_check_privkey(&grp,&m);
+		result=mbedtls_ecp_mul(&grp,&R,&m, &grp.G, Gen_Random,NULL);//生成公钥
+		mbedtls_ecp_point_write_binary(&grp,&R,MBEDTLS_ECP_PF_UNCOMPRESSED,(size_t*)&result,m_tlscontext.server_verify_data,80);
+		//mbedtls_ecdsa_sign(&grp,&r, &s,&m,hash_test_buff,64,Gen_Random,NULL);
+#endif		
+	//	m_tlscontext.grp_id=MBEDTLS_ECP_DP_SECP256R1;
+		m_tlscontext.grp_id=MBEDTLS_ECP_DP_BP256R1;
 		m_tlscontext.crypto_time=120;
 		return 0;
 }
@@ -760,39 +909,114 @@ struct TLSPacket *tls_build_server_key_exchange(struct TLSContext *context, int 
 	int i;
 	privateK = context->priv;
 	publicK = context->public_key;
-
+#ifdef UECC_TEST
+//#if 1	
 	uECC_make_key((unsigned char *)context->public_key,(unsigned char *)privateK,p_curve);
-
+#else
+#if 0	
+	fnWDT_Restart();
+	memcpy(sign_out,privateK,32);
+	Cm_Ram_Inter(sign_out,32);
+	mbedtls_mpi_read_binary(&m,sign_out,32);
+#endif	
+	//mbedtls_mpi_read_binary(&m,b_pri,32);
+	if(context->grp_id != grp.id)
+	{
+	//	mbedtls_ecp_group_free(&grp);
+		mbedtls_ecp_group_load( &grp, context->grp_id);
+	}
+//	mbedtls_ecp_mul(&grp,&R,&m, &grp.G, Gen_Random,NULL);//生成公钥
+	mbedtls_ecp_gen_keypair(&grp,&m,&R,Gen_Random,NULL);
+	//mbedtls_mpi_write_binary(&R.X,publicK,32);
+//	mbedtls_mpi_write_binary(&R.Y,publicK+32,32);
+	mbedtls_mpi_write_binary(&m,context->priv,m.n*4);
+	fnWDT_Restart();
+#endif	
 
 	packet.buf = context->message_buffer+context->message_buffer_len;
-	buf = packet.buf+384;
-	
+	//buf = packet.buf+160;
+	buf = sign_out;
 	packet.len=packet.size=0;
 	tls_head(&packet);
 	tls_packet_uint16(&packet, 0x75);
 	tls_packet_uint8(&packet, 0x0C);
 	tls_packet_uint24(&packet, 0x71);
 	tls_packet_uint8(&packet, 0x03);
-	tls_packet_uint16(&packet,0x17);//ecc256r1
-	tls_packet_uint8(&packet,0x21);  //not product
+	if(m_tlscontext.grp_id==MBEDTLS_ECP_DP_BP256R1)
+	{
+		tls_packet_uint16(&packet,0x1a);//brainpool256r1
+	}
+	else if(m_tlscontext.grp_id==MBEDTLS_ECP_DP_BP384R1)
+	{
+		tls_packet_uint16(&packet,0x1b);//brainpool384r1
+	}
+	else if(m_tlscontext.grp_id==MBEDTLS_ECP_DP_SECP384R1)
+	{
+		tls_packet_uint16(&packet,0x18);//SECP384r1
+	}
+	else
+	{
+		tls_packet_uint16(&packet,0x17);//ecc256r1
+	}
+	//tls_packet_uint8(&packet,0x21);  //not product
+	tls_packet_uint8(&packet,R.X.n*2+1);
 	fnWDT_Restart();
+#ifdef UECC_TEST	
+//#if 1	
 	uECC_compress(publicK,packet.buf+packet.len,p_curve);
 	fnWDT_Restart();
 	Cm_Ram_Inter(packet.buf+packet.len+1,32);
 	packet.len +=0x21;
-
-	
+#else
+	mbedtls_ecp_point_write_binary(&grp,&R,MBEDTLS_ECP_PF_COMPRESSED,&i,packet.buf+packet.len,128);
+	packet.len +=i;
+#endif
+		
 	memcpy(buf,context->remote_random,__TLS_CLIENT_RANDOM_SIZE);
 	memcpy(buf+__TLS_CLIENT_RANDOM_SIZE,context->local_random, __TLS_SERVER_RANDOM_SIZE);
 	memcpy(buf+__TLS_CLIENT_RANDOM_SIZE+__TLS_SERVER_RANDOM_SIZE, packet.buf + 9, packet.len-9);
 
 	fnWDT_Restart();
 	mbedtls_sha512(buf,__TLS_CLIENT_RANDOM_SIZE+__TLS_SERVER_RANDOM_SIZE+packet.len-9,publicK,0);	
+#ifdef UECC_TEST
 	Cm_Ram_Inter(publicK,32);
 	fnWDT_Restart();
 	Cm_Ram_Inter(publicK+32,32);
-	fnWDT_Restart();
+	fnWDT_Restart();	
 	uECC_sign(context->ecc_priv,publicK,64,sign_out,p_curve);
+#else
+	if(context->grp_id != grp.id)
+	{
+	//	mbedtls_ecp_group_free(&grp);
+		mbedtls_ecp_group_load( &grp, context->grp_id);
+	}
+#if 0	
+	memcpy(sign_out,context->ecc_priv,32);
+	Cm_Ram_Inter(sign_out,32);  
+	mbedtls_mpi_read_binary(&m,sign_out,32);
+#else
+	if((m_tlscontext.grp_id==MBEDTLS_ECP_DP_BP384R1)|| (m_tlscontext.grp_id==MBEDTLS_ECP_DP_SECP384R1))
+		mbedtls_mpi_read_binary(&m,context->ecc_priv,48);	
+	else
+		mbedtls_mpi_read_binary(&m,context->ecc_priv,32);	
+#endif	
+	//fnWDT_Restart();
+	//	mbedtls_ecp_mul(&grp,&R,&m, &grp.G, Gen_Random,NULL);//生成公钥
+	fnWDT_Restart();
+	mbedtls_mpi_free( &r);
+	mbedtls_mpi_free( &s );
+	mbedtls_ecdsa_sign(&grp,&r, &s,&m,publicK,64,Gen_Random,NULL);
+	//memcpy(sign_out,r.p,32);
+	//memcpy(sign_out,s.p,32);
+	mbedtls_mpi_write_binary(&r,sign_out,r.n*4);
+	mbedtls_mpi_write_binary(&s,sign_out+32,r.n*4);
+	mbedtls_mpi_free( &m );
+	//mbedtls_mpi_free( &r);
+	//mbedtls_mpi_free( &s );
+	mbedtls_ecp_point_free( &R );
+//	mbedtls_ecp_group_free( &grp );
+	fnWDT_Restart();
+#endif
 	fnWDT_Restart();
 		//for test
 #if 0		
@@ -833,14 +1057,17 @@ struct TLSPacket *tls_build_server_key_exchange(struct TLSContext *context, int 
 	tls_packet_uint16(&packet,0x0220);
 #endif
 #else
+#ifdef UECC_TEST
 	Cm_Ram_Inter(sign_out,32);
 	fnWDT_Restart();
 	Cm_Ram_Inter(sign_out+32,32);
+#endif	
 	i=0;
 	if(sign_out[0]&0x80)
 		i++;
 	if(sign_out[32]&0x80)
 		i++;
+#if 0	
 	tls_packet_uint16(&packet,0x46+i);//ecdsa len
 	tls_packet_uint16(&packet,0x3044+i);
 	if(sign_out[0]&0x80)
@@ -862,8 +1089,35 @@ struct TLSPacket *tls_build_server_key_exchange(struct TLSContext *context, int 
 	{
 		tls_packet_uint16(&packet,0x0220);
 	}
+#else
+	tls_packet_uint16(&packet,r.n*8+6+i);//ecdsa len
+	tls_packet_uint16(&packet,0x3000+r.n*8+4+i);
+	if(sign_out[0]&0x80)
+	{
+		tls_packet_uint16(&packet,0x0200+r.n*4+1);
+		tls_packet_uint8(&packet,0x00);
+	}
+	else
+	{
+		tls_packet_uint16(&packet,0x0200+r.n*4);
+	}
+	mbedtls_mpi_write_binary(&r,packet.buf+packet.len,r.n*4);
+	packet.len +=r.n*4;
+
+	if(sign_out[32]&0x80)
+	{
+		tls_packet_uint16(&packet,0x0200+r.n*4+1);
+		tls_packet_uint8(&packet,0x00);
+	}
+	else
+	{
+		tls_packet_uint16(&packet,0x0200+r.n*4);
+	}
+	mbedtls_mpi_write_binary(&s,packet.buf+packet.len,r.n*4);
+	packet.len +=r.n*4;
+#endif	
 #endif
-	tls_packet_append(&packet,sign_out+32, 32);
+//	tls_packet_append(&packet,sign_out+32, 32);
 	packet.buf[3]=((packet.len-5)>>8)&0xff;
 	packet.buf[4]=((packet.len-5))&0xff;
 	packet.buf[6]=((packet.len-9)>>16)&0xff;
@@ -878,6 +1132,7 @@ struct TLSPacket *tls_build_server_key_exchange(struct TLSContext *context, int 
 struct TLSPacket *tls_certificate_request(struct TLSContext *context) 
 {
 	struct TLSPacket packet;
+	uint16_t rd_ptr,len,type;
 	uint8_t *smgw_cert;
 	packet.buf = context->message_buffer+context->message_buffer_len;
 	packet.len=packet.size=0;
@@ -897,8 +1152,34 @@ struct TLSPacket *tls_certificate_request(struct TLSContext *context)
 	packet.len=packet.size=packet.len+0x48;
 #else	
 	smgw_cert = Get_SMGW_Cert();
-	tls_packet_append(&packet,smgw_cert+140,0x48);
-#endif	
+		for(rd_ptr=8,type=0;(rd_ptr<240) && type<5;type++)
+		{
+			if(smgw_cert[rd_ptr+1]&0x80)
+			{
+				len=smgw_cert[rd_ptr+2]<<8|smgw_cert[rd_ptr+3];
+				len +=3;
+			}
+			else
+			{
+				len=smgw_cert[rd_ptr+1];
+				len+=2;
+			}
+			rd_ptr +=len;
+		}
+		
+		if(type==5)
+		{	
+			tls_packet_uint16(&packet, smgw_cert[rd_ptr+1]+4);
+			tls_packet_uint16(&packet, smgw_cert[rd_ptr+1]+2);
+			tls_packet_append(&packet,smgw_cert+rd_ptr,smgw_cert[rd_ptr+1]+2);
+		}
+//	tls_packet_append(&packet,smgw_cert+140,0x48);
+#endif
+	packet.buf[3]=((packet.len-5)>>8)&0xff;
+	packet.buf[4]=((packet.len-5))&0xff;
+	packet.buf[6]=((packet.len-9)>>16)&0xff;
+	packet.buf[7]=((packet.len-9)>>8)&0xff;
+	packet.buf[8]=((packet.len-9))&0xff;	
 	__private_tls_update_hash(context,packet.buf+5, packet.len-5);
 	context->message_buffer_len += packet.len;
 	//return &packet;
@@ -1008,6 +1289,8 @@ struct TLSPacket *tls_build_certificate(struct TLSContext *context)
 {
 	struct TLSPacket *packet;
 	int rd_len,rd_ptr;
+	char type;
+	int len;
 //	int rd_length;
 	uint8_t *b_lmn_cert;
 	struct TLSPacket s_packet;
@@ -1090,6 +1373,43 @@ struct TLSPacket *tls_build_certificate(struct TLSContext *context)
 	packet->len=packet->size=packet->len+rd_len;
 	__private_tls_update_hash(context,packet->buf+5, packet->len-5);
 	context->message_buffer_len +=packet->len;
+	
+	for(rd_ptr=8,type=0;(rd_ptr<rd_len) && type<7;type++)
+	{
+		if(b_lmn_cert[rd_ptr+1]&0x80)
+		{
+			len=b_lmn_cert[rd_ptr+2]<<8|b_lmn_cert[rd_ptr+3];
+			len +=3;
+		}
+		else
+		{
+			len=b_lmn_cert[rd_ptr+1];
+      len+=2;
+		}
+		rd_ptr +=len;
+	}
+	if(type==7)
+	{	
+		rd_ptr-=len;
+		rd_ptr +=4;
+		rd_ptr += b_lmn_cert[rd_ptr+1]+2;
+		if(memcmp(b_lmn_cert+rd_ptr+2,MBEDTLS_OID_EC_GRP_SECP256R1,b_lmn_cert[rd_ptr+1])==0)
+		{
+			m_tlscontext.grp_id=MBEDTLS_ECP_DP_SECP256R1;
+		}
+		else if(memcmp(b_lmn_cert+rd_ptr+2,MBEDTLS_OID_EC_GRP_BP256R1,b_lmn_cert[rd_ptr+1])==0)
+		{
+			m_tlscontext.grp_id=MBEDTLS_ECP_DP_BP256R1;
+		} 
+		else if(memcmp(b_lmn_cert+rd_ptr+2,MBEDTLS_OID_EC_GRP_SECP384R1,b_lmn_cert[rd_ptr+1])==0)
+		{
+			m_tlscontext.grp_id=MBEDTLS_ECP_DP_SECP384R1;
+		}
+		else if(memcmp(b_lmn_cert+rd_ptr+2,MBEDTLS_OID_EC_GRP_BP384R1,b_lmn_cert[rd_ptr+1])==0)
+		{
+			m_tlscontext.grp_id=MBEDTLS_ECP_DP_BP384R1;
+		} 
+	}
 	return packet;
 }
 
@@ -1293,7 +1613,7 @@ int __private_tls_expand_key(struct TLSContext *context)
 	return 0;
 }
 
-unsigned char master_secret_label[] = "master secret";
+const unsigned char master_secret_label[] = "master secret";
 int tls_parse_client_key_exchange(struct TLSContext *context, const unsigned char *buf, int buf_len) 
 {
 	//int res;
@@ -1301,19 +1621,37 @@ int tls_parse_client_key_exchange(struct TLSContext *context, const unsigned cha
 //	unsigned char publicK[64];
 	
 	//res=3;
+#ifdef UECC_TEST
 	if(size==0x42)
 	{
-		memcpy(context->public_key,buf+5,64);
+		memcpy(context->public_key,buf+5,64);	
 		Cm_Ram_Inter(context->public_key,32);
 		Cm_Ram_Inter(context->public_key+32,32);
+		
 	}
 	else
-	{
-		Cm_Ram_Inter((uint8_t *)buf+6,32);
+	{		
+		Cm_Ram_Inter((uint8_t *)buf+6,32);	
 		uECC_decompress(buf+5,(uint8_t *)context->public_key,p_curve);
-	}
+	}	
 	uECC_shared_secret(context->public_key,context->priv,context->share_key,p_curve);
 	Cm_Ram_Inter(context->share_key,32);
+#else
+	if(context->grp_id != grp.id)
+	{
+	//	mbedtls_ecp_group_free(&grp);
+		mbedtls_ecp_group_load( &grp, context->grp_id);
+	}
+	mbedtls_ecp_point_read_binary(&grp,&R,buf+4,size-1);
+	memcpy(context->master_key,context->priv,32);
+//	Cm_Ram_Inter(context->master_key,32);
+	mbedtls_mpi_read_binary(&m,context->master_key,32);
+	mbedtls_ecdh_compute_shared(&grp,&r,&R,&m,Gen_Random,NULL);
+	mbedtls_mpi_write_binary(&r,context->share_key,32);
+	mbedtls_mpi_free(&r);
+	mbedtls_mpi_free(&m);
+	mbedtls_ecp_point_free(&R);
+#endif	
 	context->master_key_len=48;
 	__private_tls_prf(context,
                               context->master_key, context->master_key_len,

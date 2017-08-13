@@ -18,8 +18,6 @@ short PowerCheck(void)
 {	
 	unsigned char Buff[20];
 	unsigned char* Point;
-
-		
 		return 0;	
 }	
 

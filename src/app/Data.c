@@ -21,9 +21,9 @@
 PARA		Para;				// 电表参数
 CLK			Clk;
 COMM		Comm;
-COMM8213	Comm8213;
-ADJ 		Adj;
-DISKEY		Disk;
+//COMM8213	Comm8213;
+//ADJ 		Adj;
+//DISKEY		Disk;
 
 SRAM 		SM;
 FLAG		Flag;

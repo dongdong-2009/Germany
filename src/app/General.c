@@ -587,7 +587,7 @@ void OperationalTimeInc(void)
 void RpaInit(void)			//V2
 {
 //	SetConstPara();
-	InitPara();
+	//InitPara();
 #if ( Threephase == YesCheck ) //ИэПа
 #if( MEASCHIP == RN8207 )	
 	InitMeasPara();
@@ -605,10 +605,11 @@ void InitMeasPara(void)
 //{0x88,0x47,0x67,0x87,0x57,0x77,0x97,0x17,0x18,0x19,0x1A,0x27,0x28,0x29,0x2A,0x63,0x60,0xC0,0xC1,0xC2,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
 
 //void RpaInit(void)
+#if 1
 void InitPara(void)			//V2
 {						
 }
-
+#endif
 unsigned char GetNo(unsigned char* Point, unsigned char* Source, short ItemNums)
 {
 	unsigned char Temp;

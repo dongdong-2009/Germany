@@ -31,6 +31,10 @@
 #define SET_UART5_RTS0 UART5_RTS_PORT_VAL |= UART5_RTS_PIN_VAL
 #define SET_UART5_RTS1 UART5_RTS_PORT_VAL &= ~UART5_RTS_PIN_VAL
 
+uint8_t ch0_tx_buf[16];
+uint8_t ch0_rx_buf[SERIAL_CH0_LEN];
+uint8_t ch1_rx_buf[SERIAL_CH1_LEN];
+
 void Init_RTS1(void)
 {
 	UART1_RTS_PORT &= ~UART1_RTS_PIN;
@@ -230,6 +234,8 @@ int8_t Serial_Open(uint8_t ch,uint32_t baud,uint8_t bits,uint8_t check)
 		UART1->STA = 0x02;		//清发送中断标志
 	//	Init_RTS1();
 		SET_UART1_RTS0;
+		p_serial->serial_rx_buf = ch0_rx_buf;
+		p_serial->serial_tx_buf = ch0_tx_buf;
 	}
 	else
 	{
@@ -248,6 +254,8 @@ int8_t Serial_Open(uint8_t ch,uint32_t baud,uint8_t bits,uint8_t check)
 		UART5->STA = 0x02;		//清发送中断标志
 		Init_RTS5();
 		SET_UART5_RTS0;
+		p_serial->serial_rx_buf = ch1_rx_buf;
+		p_serial->serial_tx_buf = 0;
 	//	NVIC_EnableIRQ(UART5_IRQn);
 	}
 	DMA_Init(ch);
@@ -272,13 +280,16 @@ int16_t Serial_Write(uint8_t ch,uint8_t *buf,uint16_t len)
 	else
 		SET_UART1_RTS1;
 	p_serial->send_len=len;
-	udelay(10); //ok
+	//udelay(10); //ok
 	//udelay(100); //ok
 	if(ch==0)
 	{
 		UART1->CTRL &=~(0x02);
 		DMA_Send(0,(uint8_t *)&(UART1->TXD),buf, len);
 		buf_pos = buf;
+		m_sserial1.pre_len=0;	
+		m_sserial1.rx_pos=0;
+		m_sserial1.rx_len=0;
 	}
 	else
 	{
@@ -290,21 +301,32 @@ int16_t Serial_Write(uint8_t ch,uint8_t *buf,uint16_t len)
 uint16_t Serial_Read(uint8_t ch,uint8_t *buf,uint16_t len)
 {
 	uint16_t i;
+	uint16_t buf_len;
 	struct S_Serial_ *p_serial;
 	i=0;
 	if(ch)
+	{
 		p_serial = &m_sserial5;
+		buf_len=SERIAL_CH1_LEN;
+	}
 	else
+	{
 		p_serial = &m_sserial1;
+		buf_len = SERIAL_CH0_LEN;
+	}
 	while(p_serial->rx_len!=p_serial->rx_pos)
 	{
 		buf[i]=p_serial->serial_rx_buf[p_serial->rx_pos];
 		p_serial->rx_pos++;
-		p_serial->rx_pos%=SERIAL_BUFFER_LEN;
+		p_serial->rx_pos%=buf_len;
 		i++;
 		if(i>=len)
 			break;
-		udelay(1);
+#pragma GCC push_options
+#pragma GCC optimize ("O0")			
+		if(p_serial->rx_len==p_serial->rx_pos)
+			udelay(10);
+#pragma GCC pop_options
 	}
 	len=i;
 	return len;
@@ -314,7 +336,7 @@ uint16_t Serial_Status(uint8_t ch)
 	if(ch)
 		return m_sserial5.send_len;
 	else
-	 return m_sserial1.send_len;
+		return m_sserial1.send_len;
 }
 #if 0
 void UART0_HANDLER(void)
@@ -351,7 +373,27 @@ void UART0_HANDLER(void)
 }
 #endif
 extern uint8_t mcu_busy;
+extern uint32_t ms_count;
+extern uint8_t i_Meter_Addr;
 extern void HDLC_Send_RNR(void);
+extern void HDLC_Send_UI(void);
+void  HDLC_FAST_Rep(void)
+{
+		if(mcu_busy)
+		{
+			if(m_sserial1.pre_len>=10)
+			{
+				if(m_sserial1.serial_tx_buf[2]==9)
+				{
+					HDLC_Send_RNR();
+				}
+				if(m_sserial1.pre_len>=m_sserial1.serial_tx_buf[2])
+				{
+					HDLC_Send_UI();
+				}
+			}
+		}
+}
 void UART1_HANDLER(void)
 {
 	u32  status;
@@ -360,34 +402,74 @@ void UART1_HANDLER(void)
 	UART1->STA = UART1->STA;
 	if(status&1)
 //	while(UART0->STA&1)
-	{		
-		m_sserial1.serial_rx_buf[m_sserial1.rx_len]=UART1->RXD;
+	{
+		//if(!mcu_busy)
+		{	
+			ms_count=0;
+			m_sserial1.serial_rx_buf[m_sserial1.rx_len]=UART1->RXD;
 		//UART1->STA |=1;
-		m_sserial1.rx_len++;
-		m_sserial1.rx_len%=SERIAL_BUFFER_LEN;
+			m_sserial1.rx_len++;
+			m_sserial1.rx_len%=SERIAL_CH0_LEN;
+		}
+	//	else
 		if(mcu_busy)
 		{
+			if(m_sserial1.serial_tx_buf[0]!=0x7e)
+			{
+				m_sserial1.pre_len=0;
+			}
 			m_sserial1.serial_tx_buf[m_sserial1.pre_len]=UART1->RXD;
+#if 0			
 			if(m_sserial1.pre_len==3)
 			{
 				if((m_sserial1.serial_tx_buf[0]!=0x7e) || (m_sserial1.serial_tx_buf[1]!=0xa0) || (m_sserial1.serial_tx_buf[2]!=9))
 				{
 					m_sserial1.pre_len=0;
 				}
-			}	
-			m_sserial1.pre_len++;
-			if(m_sserial1.pre_len==11)
-			{
-				HDLC_Send_RNR();
-				m_sserial1.pre_len=0;
-				m_sserial1.rx_pos=m_sserial1.rx_len;
 			}
-			m_sserial1.pre_len%=16;
+#endif			
+			m_sserial1.pre_len++;
+			m_sserial1.pre_len%=64;
+#if 1		
+			if(m_sserial1.pre_len>=10)
+			{
+				if(m_sserial1.serial_tx_buf[2]==9 && ((m_sserial1.serial_tx_buf[3]>>1)==i_Meter_Addr))
+				{
+					HDLC_Send_RNR();
+					m_sserial1.pre_len=0;	
+					m_sserial1.rx_pos=m_sserial1.rx_len;
+				}
+#if 0				
+				if(m_sserial1.serial_tx_buf[2]==43 && (m_sserial1.pre_len>40))
+				{
+					HDLC_Send_UI();
+					m_sserial1.pre_len=0;
+				}
+#endif				
+#if 0				
+				if(m_sserial1.serial_tx_buf[10]==0x7e)
+				{
+					m_sserial1.rx_pos=m_sserial1.rx_len;
+					m_sserial1.pre_len=0;	
+				}
+				else
+				{
+					if(m_sserial1.pre_len>40)
+					{
+						HDLC_Send_UI();
+						m_sserial1.pre_len=0;
+					}
+				}
+#endif				
+			}
+#endif			
 		}
+#if 0		
 		else
 		{
 			m_sserial1.pre_len=0;
 		}
+#endif
 	}
 	if(status&2)
 	{	
@@ -411,7 +493,7 @@ void UART5_HANDLER(void)
 		m_sserial5.serial_rx_buf[m_sserial5.rx_len]=UART5->RXD;
 		//UART5->STA |=1;
 		m_sserial5.rx_len++;
-		m_sserial5.rx_len%=SERIAL_BUFFER_LEN;
+		m_sserial5.rx_len%=SERIAL_CH1_LEN;
 	}
 	if(status&2)
 	{	

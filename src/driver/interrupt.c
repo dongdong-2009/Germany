@@ -23,6 +23,7 @@
 extern uint32_t gprs_ms;
 extern uint32_t ms_count;
 extern uint32_t sml_tx_rx_time;
+extern void  HDLC_FAST_Rep(void);
 void TC1_HANDLER(void)    //0.5ms
 {
 	TC1->STA = 0x0f;
@@ -38,12 +39,17 @@ void TC0_HANDLER(void)    //系统主节拍.1ms
 	//	if(gprs_ms==0)
 		//	DMA->C0CTRL |= 1;
 	}
+	//HDLC_FAST_Rep();
+#if 0	
 	if(sml_tx_rx_time)
 	{
 		sml_tx_rx_time--;
 	}
+#endif	
+#if 0	
 	if(Comm8213.CommDly != 0)
 		Comm8213.CommDly--; 	
+#endif	
 #if 0
 	Clk.Sec_64++;
 
@@ -84,7 +90,7 @@ void TC0_HANDLER(void)    //系统主节拍.1ms
 #endif
 	return;
 }
-
+#if 0
 void CMP_HANDLER(void)
 {
 
@@ -94,7 +100,7 @@ void VCH_HANDLER(void)
 {
 
 }
-
+#endif
 #if 0
 void UART0_HANDLER(void)
 {
@@ -502,6 +508,8 @@ void UART3_HANDLER(void)
 ///------双核通信----------
 void UART5_HANDLER(void)
 {
+	UART5->STA=UART5->STA;
+#if 0
 	u32  status;
 //	u8	 temp;
 	status = UART5->STA;
@@ -558,7 +566,7 @@ void UART5_HANDLER(void)
 				Comm8213.NeedSendCnt--;//需要发送的数据减一//
 			}		
 		}
-		
+#endif		
 	return;
 }
 #endif
@@ -607,9 +615,10 @@ void KBI_HANDLER(void)
 //		NVIC_EnableIRQ(RTC_IRQn);	
 
 		Flag.Disk |=(F_Key1+F_Key2);	
+#if 0		
 		Disk.PoweoffNo = 0xA5;//TEST LCD					
 		Disk.PoweoffPtr = 0;//TEST LCD	
-	
+#endif	
 		fnDl645SubClock_Init();
 	
 	}
@@ -627,6 +636,8 @@ void KBI_HANDLER(void)
 
 void RTC_HANDLER(void)
 {	
+	
+	WDT->EN = 0xbb;	
 //	unsigned char i;
 	if(RTC->IF&0x04)        // 定时2   1/64秒中断
 	{	

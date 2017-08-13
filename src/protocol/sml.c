@@ -2,7 +2,7 @@
 #include "typeE2p.h"
 #include "sml.h"
 
-SMLRECORD SMLRecord[20];
+SMLRECORD SMLRecord[8];
 ORDERRECORD	OrderRecord[16];
 ORDERRECORD	OrderRecord0100[10];
 SIGNATURE Signatrue;
@@ -1737,6 +1737,7 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
   uint8_t	OBISType;
 	uint8_t ret;
 	uint8_t attri_num;
+	uint16_t short_Name;
 	sml_function sml_callback;
 	sml_beforefun smal_callbefore;
   if(OBISNo==16)
@@ -1843,6 +1844,32 @@ uint8_t DoProPOBIS(uint8_t OBISNo)
   SMLComm.SendBuf[SMLComm.SendPtr]=0x62;
   SMLComm.SendPtr++;
   SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
+	
+	short_Name = SMLComm.RecBuf[OrderRecord[5].OLStartAdd+1];
+	short_Name = (short_Name<<8) | SMLComm.RecBuf[OrderRecord[5].OLStartAdd+2];
+	SMLRecord[1].record_num = 5;
+	if(short_Name==1)
+	{
+		SMLComm.SendBuf[++SMLComm.SendPtr]=0x7;
+		SMLComm.SendBuf[++SMLComm.SendPtr]=SMLOBISTab[OBISNo].OBIS0;
+		SMLComm.SendBuf[++SMLComm.SendPtr]=SMLOBISTab[OBISNo].OBIS1;
+		SMLComm.SendBuf[++SMLComm.SendPtr]=SMLOBISTab[OBISNo].OBIS2;
+		SMLComm.SendBuf[++SMLComm.SendPtr]=SMLOBISTab[OBISNo].OBIS3;
+		SMLComm.SendBuf[++SMLComm.SendPtr]=SMLOBISTab[OBISNo].OBIS4;
+		SMLComm.SendBuf[++SMLComm.SendPtr]=SMLOBISTab[OBISNo].OBIS5;
+		SMLComm.SendBuf[++SMLComm.SendPtr]=0x01;
+		
+		SMLComm.SendBuf[++SMLComm.SendPtr]=0x73;
+		SMLComm.SendPtr++;
+		RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[6].OLStartAdd]),OrderRecord[6].OLLength);//§Õattri
+		SMLComm.SendPtr+=OrderRecord[6].OLLength;
+		SMLComm.SendBuf[SMLComm.SendPtr]=0x72;
+		SMLComm.SendPtr++;
+		SMLComm.SendBuf[SMLComm.SendPtr]=0x62;
+		SMLComm.SendPtr++;
+		SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
+		SMLRecord[1].record_num = 6;
+	}
   
   if((OBISType == 0x56)||(OBISType == 0x55))
   {

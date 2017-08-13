@@ -54,6 +54,7 @@ void fnDl645MainClock_Init( void )
 	SYSCTL->KBI_EN = 0x0000;
 	SYSCTL->SYS_RST = 0x0000;   
 	SystemDelay(10);
+	WDT->CTRL |= (7<<1);
 	SYSCTL->SYS_PS = 0x00;
 	while(bsts);
 	return;

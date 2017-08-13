@@ -155,9 +155,9 @@ void AES_128(uint8_t * pkey,uint8_t *input,uint8_t *output)
 		WDT->EN = 0xbb;	
 	//AES_ENC->CTL = (1<<4);	
 	AES_ENC->CTL |= 0x1;//EBC
-	SystemDelay(5);
+	//SystemDelay(5);
 	while((AES_ENC->STA&0x1)==0x0)
-		WDT->EN = 0xbb;
+		;//WDT->EN = 0xbb;
 	for (i = 0; i < 4; i ++) 
 	{
 		output[(3-i)*4+3] = AES_ENC->CT[i];
@@ -261,9 +261,9 @@ uint16_t CmEnAES128(uint8_t * pkey,uint8_t *iv,uint8_t *pOutTag,uint8_t *data,ui
 			AES_ENC->PT[3-i] = tmp_cix;
 		}   
 
-		SystemDelay(5);
+	//	SystemDelay(5);
 		while((AES_ENC->STA&0x1)==0x0)
-			WDT->EN = 0xbb;
+			;//WDT->EN = 0xbb;
 		if(pOutCiphertext)
 		{
 			for (i = 0; i < 4; i ++) 
@@ -374,10 +374,10 @@ uint16_t CmDeAES128(uint8_t * pkey,uint8_t *iv,uint8_t *pOutTag,uint8_t *data,ui
 			AES_DEC->CT[3-i] = tmp_cix;
 		}
 		
-		SystemDelay(5);
+		//SystemDelay(5);
 		while((AES_DEC->STAT&0x1)==0x0)
 		{
-			SystemDelay(1);
+			;//SystemDelay(1);
 		}
 		if(ptx)
 		{
