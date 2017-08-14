@@ -15,10 +15,11 @@ struct iec1107_s
 	uint8_t iec1107_code[16];
 	uint32_t ramaddr; 
 	uint8_t deci;
+	uint8_t Len;
 };
 uint8_t ieccmd_ptr;
 #define IEC1107_TABLE_NUM    17
-const struct iec1107_s iec1107_table[IEC1107_TABLE_NUM]=
+struct iec1107_s iec1107_table[IEC1107_TABLE_NUM]=
 {
 #if 0	
 	"96.1.0",(uint32_t)&Para.servrid,16,
@@ -46,31 +47,32 @@ const struct iec1107_s iec1107_table[IEC1107_TABLE_NUM]=
 	"1.8.00.63",(uint32_t)&Para.P0_year,10,
 	"1.8.00.65",(uint32_t)&Para.P0_last,10,
 #else
-	"1-0:96.1.0*255",(uint32_t)&Para.servrid,10,
+	"1-0:96.1.0*255",(uint32_t)&Para.servrid,10,8,
+	
 	//"0.0.0",(uint32_t)&Para.servrid,16,
-	"1-0:1.8.0*255",(uint32_t)&Para.Pp0,10,
-	"1-0:2.8.0*255",(uint32_t)&Para.Pn0,10,
+	"1-0:1.8.0*255",(uint32_t)&Para.Pp0[0],16,6,
+	"1-0:2.8.0*255",(uint32_t)&Para.Pn0[0],16,6,
 	/*"32.07.00",(uint32_t)&Para.Ua,10,
 	"52.07.00",(uint32_t)&Para.Ub,10,
 	"72.07.00",(uint32_t)&Para.Uc,10,
 	"31.07.00",(uint32_t)&Para.Ia,10,
 	"51.07.00",(uint32_t)&Para.Ib,10,
 	"71.07.00",(uint32_t)&Para.Ic,10,*/
-	"1-0:32.7.0*255",(uint32_t)&Para.Ua,10,
-	"1-0:52.7.0*255",(uint32_t)&Para.Ub,10,
-	"1-0:72.7.0*255",(uint32_t)&Para.Uc,10,
-	"1-0:31.7.0*255",(uint32_t)&Para.Ia,10,
-	"1-0:51.7.0*255",(uint32_t)&Para.Ib,10,
-	"1-0:71.7.0*255",(uint32_t)&Para.Ic,10,
-	"1-0:16.7.0*255",(uint32_t)&Para.Pt,10,
-	"1-0:14.7.0*255",(uint32_t)&Para.Freq,10,
+	"1-0:32.7.0*255",(uint32_t)&Para.Ua[0],16,2,
+	"1-0:52.7.0*255",(uint32_t)&Para.Ub[0],16,2,
+	"1-0:72.7.0*255",(uint32_t)&Para.Uc[0],16,2,
+	"1-0:31.7.0*255",(uint32_t)&Para.Ia[0],16,2,
+	"1-0:51.7.0*255",(uint32_t)&Para.Ib[0],16,2,
+	"1-0:71.7.0*255",(uint32_t)&Para.Ic[0],16,2,
+	"1-0:16.7.0*255",(uint32_t)&Para.Pt[0],16,2,
+	"1-0:14.7.0*255",(uint32_t)&Para.Freq[0],16,2,
 	//"F.F",(uint32_t)&Para.meter_sts,16,
-	"1-0:97.97.0*255",(uint32_t)&Para.meter_sts,16,
-	"1-0:1.8.00*60",(uint32_t)&Para.P0_day,10,
-	"1-0:1.8.00*61",(uint32_t)&Para.P0_week,10,
-	"1-0:1.8.00*62",(uint32_t)&Para.P0_month,10,
-	"1-0:1.8.00*63",(uint32_t)&Para.P0_year,10,
-	"1-0:1.8.00*65",(uint32_t)&Para.P0_last,10,
+	"1-0:97.97.0*255",(uint32_t)&Para.meter_sts,16,4,
+	"1-0:1.8.00*60",(uint32_t)&Para.P0_day,10,8,
+	"1-0:1.8.00*61",(uint32_t)&Para.P0_week,10,8,
+	"1-0:1.8.00*62",(uint32_t)&Para.P0_month,10,8,
+	"1-0:1.8.00*63",(uint32_t)&Para.P0_year,10,8,
+	"1-0:1.8.00*65",(uint32_t)&Para.P0_last,10,8,	
 #endif
 };
 uint64_t strtoint(uint8_t *buf,uint8_t len,uint8_t deci)
@@ -113,7 +115,7 @@ void iec1107_write(void)
 		  iec1107_sendbuf[4]=0x0a;
 			IEC1107_WRITE(iec1107_sendbuf,5);
 			ieccmd_ptr++;
-			Comm.BTime2=90;
+			Comm.BTime2=64;
 			iec_flag=0;
 			break;
 		case 1:
@@ -131,11 +133,11 @@ void iec1107_write(void)
 		  iec1107_sendbuf[5]=0x0a;
 			ieccmd_ptr++;
 			IEC1107_WRITE(iec1107_sendbuf,6);
-			Comm.BTime2=120;
+			Comm.BTime2=64;
 		  break;
 		default:
 			ieccmd_ptr++;
-			Comm.BTime2=128;
+			Comm.BTime2=64;
 		//	Serial_Open(1,9600,7,SERIAL_CHECK_EVEN);
 			break;
 	}
@@ -149,7 +151,7 @@ void iec1107_read(void)
 	len=IEC1107_READ(iec1107_buf+iec1107_buf_pos,250-iec1107_buf_pos);
 	if(len)
 	{
-		Comm.BTime2=128;
+		Comm.BTime2=64;
 		len +=iec1107_buf_pos;
 		if((iec1107_buf[len-2]!=0x0d) || (iec1107_buf[len-1]!=0x0a))
 		{
@@ -231,13 +233,19 @@ void iec1107_read(void)
 									if(tmp!=Para.servrid)
 									{
 										Para.servrid=tmp;
-										memcpy(m_lmn_info.b_sub_identification+5,&tmp,5);
-										Cm_Ram_Inter(m_lmn_info.b_sub_identification+5,5);
+										//memcpy(m_lmn_info.b_sub_identification+5,&tmp,5);
+										//Cm_Ram_Inter(m_lmn_info.b_sub_identification+5,5);
+										//memcpy(m_lmn_info.b_sensor_identification,m_lmn_info.b_sub_identification,10);
+										memcpy(m_lmn_info.b_sensor_identification,m_lmn_info.b_sub_identification,5);
+										memcpy(m_lmn_info.b_sensor_identification+5,&tmp,5);
+										Cm_Ram_Inter(m_lmn_info.b_sensor_identification+5,5);
+										memcpy(m_lmn_info.b_sub_identification,m_lmn_info.b_sensor_identification,10);
 										E2P_WData( Server_ID,m_lmn_info.b_sub_identification, 10 );
 									}
 									break;
 								default:
-								*(uint64_t *)iec1107_table[p].ramaddr=strtoint(iec1107_buf+k+1,j-1-k,iec1107_table[p].deci);
+								 tmp=strtoint(iec1107_buf+k+1,j-1-k,iec1107_table[p].deci);
+								  memcpy((unsigned char *)iec1107_table[p].ramaddr,&tmp,iec1107_table[p].Len);
 								break;
 							}	
 							break;
@@ -288,9 +296,6 @@ void iec1107_read(void)
 			iec1107_buf_pos=0;
 			iec1107_write();
 		}
-		/*if(Comm.BTime2==0)
-		{
-		}*/
 	}
 	Para.meter_sts |=0x4;
 	return;

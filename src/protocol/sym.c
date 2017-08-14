@@ -240,7 +240,7 @@ int16_t Sym4(uint8_t *recvbuf,uint8_t *sendbuf,uint16_t len)
 		len-=25;
 	//	E2P_WData( E2P_SMGW_Certi,recvbuf+9,len-25);
 		if(len>256)
-			memcpy(b_gw_cert,recvbuf+9,255);
+			memcpy(b_gw_cert,recvbuf+9,256);
 		else
 			memcpy(b_gw_cert,recvbuf+9,len-25);
 		E2P_WData( E2P_SMGW_Certi,recvbuf+9,len-25);
@@ -305,8 +305,14 @@ int16_t CmSym(uint8_t *recvbuf,uint8_t *sendbuf,uint16_t len)
 		case 1:
 		case 2:
 		case 3:*/
+#if 0	
 			CM_Mess2020_Key_Calculate(keytext,0x11,Len,m_lmn_info.b_sub_identification,Lmac);
 			CM_Mess2020_Key_Calculate(keytext,0x10,Len,m_lmn_info.b_sub_identification,Lenc);
+#else
+			CM_Mess2020_Key_Calculate(keytext,0x11,Len,m_lmn_info.b_sensor_identification,Lmac);
+			CM_Mess2020_Key_Calculate(keytext,0x10,Len,m_lmn_info.b_sensor_identification,Lenc);
+#endif
+	
 		/*	break;
 		default:
 			break;
@@ -320,16 +326,26 @@ int16_t CmSym(uint8_t *recvbuf,uint8_t *sendbuf,uint16_t len)
 	{
 		case 1:
 			Len = Trans_Counter;
+#if 0		
 			CM_Mess2020_Key_Calculate(keytext,0x1,Len,m_lmn_info.b_sub_identification,Kmac);
 			CM_Mess2020_Key_Calculate(keytext,0x0,Len,m_lmn_info.b_sub_identification,Kenc);
+#else
+			CM_Mess2020_Key_Calculate(keytext,0x1,Len,m_lmn_info.b_sensor_identification,Kmac);
+			CM_Mess2020_Key_Calculate(keytext,0x0,Len,m_lmn_info.b_sensor_identification,Kenc);
+#endif		
 			break;
 		case 2:
 		case 3:
 		case 4:
 		case 5:
 			Len = Trans_Counter+2;
+#if  0		
 			CM_Mess2020_Key_Calculate(keytext,0x1,Len,m_lmn_info.b_sub_identification,Kmac);
 			CM_Mess2020_Key_Calculate(keytext,0x0,Len,m_lmn_info.b_sub_identification,Kenc);
+#else
+			CM_Mess2020_Key_Calculate(keytext,0x1,Len,m_lmn_info.b_sensor_identification,Kmac);
+			CM_Mess2020_Key_Calculate(keytext,0x0,Len,m_lmn_info.b_sensor_identification,Kenc);
+#endif		
 			break;
 		default:
 			break;

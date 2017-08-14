@@ -117,6 +117,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
+          <Name>/</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -150,7 +151,7 @@
           <Type>0</Type>
           <LineNumber>1012</LineNumber>
           <EnabledFlag>0</EnabledFlag>
-          <Address>14690</Address>
+          <Address>14778</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -291,7 +292,22 @@
         <Ww>
           <count>25</count>
           <WinNumber>1</WinNumber>
-          <ItemText>((GPIO_TypeDef *) ((uint32_t )0x50000000 ) )</ItemText>
+          <ItemText>ch1_rx_buf</ItemText>
+        </Ww>
+        <Ww>
+          <count>26</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>m_sserial5.serial_rx_buf</ItemText>
+        </Ww>
+        <Ww>
+          <count>27</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>Para.Pp0</ItemText>
+        </Ww>
+        <Ww>
+          <count>28</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>Para.Uc</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>
@@ -300,12 +316,17 @@
           <WinNumber>2</WinNumber>
           <ItemText>grp</ItemText>
         </Ww>
+        <Ww>
+          <count>1</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>m_sserial5.rx_len</ItemText>
+        </Ww>
       </WatchWindow2>
       <MemoryWindow1>
         <Mm>
           <WinNumber>1</WinNumber>
           <SubType>0</SubType>
-          <ItemText>&amp;m_Mesure.capture_time</ItemText>
+          <ItemText>iec1107_buf</ItemText>
           <AccSizeX>0</AccSizeX>
         </Mm>
       </MemoryWindow1>
@@ -313,7 +334,7 @@
         <Mm>
           <WinNumber>2</WinNumber>
           <SubType>0</SubType>
-          <ItemText>m_tlscontext.share_key</ItemText>
+          <ItemText>ch1_rx_buf</ItemText>
           <AccSizeX>0</AccSizeX>
         </Mm>
       </MemoryWindow2>
@@ -1520,6 +1541,18 @@
       <bDave2>0</bDave2>
       <PathWithFileName>C:\Keil_v5\ARM\PACK\ARM\mbedTLS\1.2.0\library\asn1write.c</PathWithFileName>
       <FilenameWithoutPath>asn1write.c</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>7</GroupNumber>
+      <FileNumber>93</FileNumber>
+      <FileType>1</FileType>
+      <tvExp>0</tvExp>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>C:\Keil_v5\ARM\PACK\ARM\mbedTLS\1.2.0\library\aes.c</PathWithFileName>
+      <FilenameWithoutPath>aes.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>

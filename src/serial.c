@@ -320,12 +320,16 @@ uint16_t Serial_Read(uint8_t ch,uint8_t *buf,uint16_t len)
 		p_serial->rx_pos++;
 		p_serial->rx_pos%=buf_len;
 		i++;
-		if(i>=len || buf[i-1]==0x7e)
+		
+		if(i>=len || ((i!=1) && (buf[i-1]==0x7e)))
 			break;
 #pragma GCC push_options
-#pragma GCC optimize ("O0")			
-		if(p_serial->rx_len==p_serial->rx_pos)
-			udelay(10);
+#pragma GCC optimize ("O1")	
+		if(ch==0)
+		{	
+			if(p_serial->rx_len==p_serial->rx_pos)
+				udelay(10);
+		}
 #pragma GCC pop_options
 	}
 	len=i;
@@ -400,6 +404,8 @@ void UART1_HANDLER(void)
 	status = UART1->STA;
 //	UART1->STA &= 0x3d;
 	UART1->STA = UART1->STA;
+#pragma GCC push_options
+#pragma GCC optimize ("O3")	
 	if(status&1)
 //	while(UART0->STA&1)
 	{
@@ -429,15 +435,17 @@ void UART1_HANDLER(void)
 			}
 #endif			
 			m_sserial1.pre_len++;
-			m_sserial1.pre_len%=64;
+			m_sserial1.pre_len%=16;
 #if 1		
 			if(m_sserial1.pre_len>=10)
 			{
+				if(m_sserial1.serial_tx_buf[m_sserial1.pre_len-1]==0x7e || m_sserial1.serial_tx_buf[2]==m_sserial1.pre_len+2)
+				{
+					m_sserial1.pre_len=0;	
+				}
 				if(m_sserial1.serial_tx_buf[2]==9 && ((m_sserial1.serial_tx_buf[3]>>1)==i_Meter_Addr))
 				{
 					HDLC_Send_RNR();
-					m_sserial1.pre_len=0;	
-					m_sserial1.rx_pos=m_sserial1.rx_len;
 				}
 #if 0				
 				if(m_sserial1.serial_tx_buf[2]==43 && (m_sserial1.pre_len>40))
@@ -478,6 +486,7 @@ void UART1_HANDLER(void)
 		m_sserial1.send_len=0;
 		SET_UART1_RTS0;
 	}
+#pragma GCC pop_options
 	return;
 }
 

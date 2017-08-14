@@ -47,7 +47,7 @@ uint8_t sml_test[256]={0x1B,0x1B,0x1B,0x1B,0x01,0x01,0x01,0x01,0x76,0x05,0x01,0x
 0x00,0x02,0x01,0x71,0x01,0x63,0xBB,0xB5,0x00,0x00,0x00,0x00,0x1B,0x1B,0x1B,0x1B,
 0x1A,0x03,0x11,0x9B};
 #endif
-uint8_t pre_hdlc_buf[256];
+uint8_t pre_hdlc_buf[384];
 uint32_t pre_hdlc_len;
 uint8_t mcu_busy;
 uint8_t ControlByte,oldControlByte;
@@ -112,9 +112,10 @@ void InitServerId(void)
 #else
 	memcpy(m_lmn_info.b_sub_identification+2,Manufacture,3);
 	memcpy(m_lmn_info.b_sub_identification+7,"STC",3);
-	memcpy(m_lmn_info.b_sensor_identification,m_lmn_info.b_sub_identification,9);
+//	memcpy(m_lmn_info.b_sensor_identification,m_lmn_info.b_sub_identification,10);
+	memset(m_lmn_info.b_sensor_identification,0xff,10);
 #endif	
-	m_lmn_info.b_sensor_identification[9]=0x18;
+//	m_lmn_info.b_sensor_identification[9]=0x18;
 	m_lmn_info.b_hdlc_LMN_Addr=2;
 	i_Meter_Addr = 68;
 	m_lmn_info.b_hdlc_slot = 1;
@@ -642,16 +643,15 @@ void CM_HDLC_Receive(void)
 	{
 		i_rx_length=Serial_Read(b_Hdlc_buf,11);
 	}*/
-	#if 0 //test delete
+	#if 1 //test delete
 	if(i_rx_length==0)
 	{
 		if((ms_count&0xfffffff0) && i_rx_len)
 			i_rx_len=0;
 		return;
 	}
-	#endif
 	ms_count=0;
-
+	#endif
 	i_rx_len+=i_rx_length;
 	if(i_rx_len<11)
 		return;
@@ -962,6 +962,10 @@ void CM_HDLC_Receive(void)
 			RAM_Write(b_short_frame+10,(uint8_t *)&m_lmn_info,32);
 			i_send_length=HDLC_Assemble(b_short_frame,32);
 			HDLC_WRITE(b_short_frame,i_send_length);
+		//	if(oldControlByte==HDLC_I)
+			{
+				ControlByte=oldControlByte;
+			}
 #else
 			//i_send_length=Cm_Handle_Assign_Addr(b_Hdlc_buf+10,i_rx_length);
 			//if(((i_Meter_Prot==HDLC_UI_PROTOCOL_ADDR_ASSIGN)&&i_send_length) || ((i_Meter_Prot==HLDC_UI_PROTOCOL_ADDR_VERIFY)&&(i_send_length==0)))

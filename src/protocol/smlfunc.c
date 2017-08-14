@@ -10,7 +10,7 @@
 #include "TypeE2p.h"
 extern SMLCOMM	SMLComm;
 extern ORDERRECORD	OrderRecord[16];
-extern SMLRECORD SMLRecord[6];
+extern SMLRECORD SMLRecord[4];
 struct S_Measure_{
 	uint64_t value;
 	uint32_t capture_time;
@@ -134,63 +134,6 @@ void Signature_Measure(void)
 	Cm_Ram_Inter(m_Mesure_n.signature_val+32,32);
 #endif	
 	}
-}
-
-uint8_t Get_P_Sig_val(unsigned char *input,unsigned char *output)
-{
-	if(m_Mesure.signature_val[0])
-	{
-		memcpy(output,&m_Mesure.value,8);
-		return ReturnOK;
-	}
-	else
-		return ReturnERR15;
-		
-}
-
-uint8_t Get_P_Sig_sts(unsigned char *output)
-{
-	memcpy(output,&m_Mesure.sts,4);
-}
-
-uint8_t Get_P_Sig_time(unsigned char *output)
-{
-	memcpy(output,&m_Mesure.capture_time,4);
-}
-
-
-uint8_t Get_P_Signature(unsigned char *output)
-{
-	memcpy(output,m_Mesure.signature_val,64);
-}
-
-
-uint8_t Get_N_Sig_val(unsigned char *input,unsigned char *output)
-{
-	if(m_Mesure_n.signature_val[0])
-	{
-		memcpy(output,&m_Mesure_n.value,8);
-		return ReturnOK;
-	}
-	else
-		return ReturnERR15;
-		
-}
-
-uint8_t Get_N_Sig_sts(unsigned char *output)
-{
-	memcpy(output,&m_Mesure_n.sts,4);
-}
-
-uint8_t Get_N_Sig_time(unsigned char *output)
-{
-	memcpy(output,&m_Mesure_n.capture_time,4);
-}
-
-
-uint8_t Get_N_Signature(unsigned char *output)
-{
-	memcpy(output,m_Mesure_n.signature_val,64);
 }
 
 uint8_t SetPrivateKey(uint16_t Flag)
@@ -585,6 +528,7 @@ uint8_t GetEC_Pp0(unsigned char *input,unsigned char *output)
 #if 0	
 	memcpy(output,&Para.Pp0,8);
 #endif
+#if 0	
 	if(SMLComm.RecBuf[OrderRecord[SMLRecord[1].record_num].OLStartAdd+2]==5)
 	{
 		*(output-1)=0x65;
@@ -609,6 +553,7 @@ uint8_t GetEC_Pp0(unsigned char *input,unsigned char *output)
 		SMLComm.SendPtr+=2;
 	}
 	else
+#endif		
 	{
 		memset(output,0,8);
 	//*(unsigned long *)(output+4)=BCD4_Long(Para.Pp0);
@@ -639,6 +584,7 @@ uint8_t GetEC_Pn0(unsigned char *input,unsigned char *output)
 #if 0	
 	memcpy(output,&Para.Pn0,8);
 #endif
+#if 0	
 	if(SMLComm.RecBuf[OrderRecord[SMLRecord[1].record_num].OLStartAdd+2]==5)
 	{
 		*(output-1)=0x65;
@@ -659,6 +605,7 @@ uint8_t GetEC_Pn0(unsigned char *input,unsigned char *output)
 		SMLComm.SendPtr+=2;
 	}
 	else
+#endif		
 	{
 		memset(output,0,8);
 		//*(unsigned long *)(output+4)=BCD4_Long(Para.Pn0);
@@ -673,6 +620,7 @@ uint8_t GetEC_Pn0(unsigned char *input,unsigned char *output)
 
 uint8_t GetU_L1(unsigned char *input,unsigned char *output)
 {
+	unsigned int tmp;
 	if(input)
 		return ReturnOK;
 	if(!output)
@@ -681,12 +629,17 @@ uint8_t GetU_L1(unsigned char *input,unsigned char *output)
 	}
 	
 	memset(output,0,8);
-	memcpy(output+4,&Para.Ua,4);
+	//memcpy(output+4,&Para.Ua,4);
+	//*(unsigned long *)(output+4)=BCD4_Long(Para.Ua);
+	tmp = BCD4_Long(Para.Ua);
+	tmp /=10;
+	memcpy(output+4,&tmp,4);
 	Cm_Ram_Inter(output+4,4);
 	return ReturnOK;
 }
 uint8_t GetU_L2(unsigned char *input,unsigned char *output)
 {
+	unsigned int tmp;
 	if(input)
 		return ReturnOK;
 	if(!output)
@@ -694,12 +647,17 @@ uint8_t GetU_L2(unsigned char *input,unsigned char *output)
 		return ReturnERR03;
 	}
 	memset(output,0,8);
-	memcpy(output+4,&Para.Ub,4);
+	//memcpy(output+4,&Para.Ub,4);
+	//*(unsigned long *)(output+4)=BCD4_Long(Para.Ub);
+	tmp = BCD4_Long(Para.Ub);
+	tmp /=10;
+	memcpy(output+4,&tmp,4);
 	Cm_Ram_Inter(output+4,4);
 	return ReturnOK;
 }
 uint8_t GetU_L3(unsigned char *input,unsigned char *output)
 {
+	unsigned int tmp;
 	if(input)
 		return ReturnOK;
 	if(!output)
@@ -707,7 +665,11 @@ uint8_t GetU_L3(unsigned char *input,unsigned char *output)
 		return ReturnERR03;
 	}
 	memset(output,0,8);
-	memcpy(output+4,&Para.Uc,4);
+	//memcpy(output+4,&Para.Uc,4);
+	//*(unsigned long *)(output+4)=BCD4_Long(Para.Uc);
+	tmp = BCD4_Long(Para.Uc);
+	tmp /=10;
+	memcpy(output+4,&tmp,4);
 	Cm_Ram_Inter(output+4,4);
 	return ReturnOK;
 }
@@ -839,72 +801,6 @@ uint8_t GetS_back(uint16_t Flag)
 		SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=Unit_W;
 		SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
 	}
-	return ReturnOK;
-}
-
-uint8_t GetSa(unsigned char *input,unsigned char *output)
-{
-	int64_t tmp;
-	if(input)
-		return ReturnOK;
-	if(!output)
-	{
-		return ReturnERR03;
-	}
-//	memset(output,0,8);
-	//memcpy(output+4,&Para.Pt,4);
-//*(unsigned long *)(output+4)=BCD4_Long(Para.Pt);
-//	Para.Pa[0]&=0xf0;
-	tmp = BCD4_Long(Para.Pa);
-	//tmp /=10;
-	if(Para.StatusWord &(1<<12))
-		tmp = tmp*-1;
-	memcpy(output,&tmp,8);
-	Cm_Ram_Inter(output,8);
-	return ReturnOK;
-}
-
-uint8_t GetSb(unsigned char *input,unsigned char *output)
-{
-	int64_t tmp;
-	if(input)
-		return ReturnOK;
-	if(!output)
-	{
-		return ReturnERR03;
-	}
-//	memset(output,0,8);
-	//memcpy(output+4,&Para.Pt,4);
-//*(unsigned long *)(output+4)=BCD4_Long(Para.Pt);
-	//Para.Pb[0]&=0xf0;
-	tmp = BCD4_Long(Para.Pb);
-//	tmp /=10;
-	if(Para.StatusWord &(1<<13))
-		tmp = tmp*-1;
-	memcpy(output,&tmp,8);
-	Cm_Ram_Inter(output,8);
-	return ReturnOK;
-}
-
-uint8_t GetSc(unsigned char *input,unsigned char *output)
-{
-	int64_t tmp;
-	if(input)
-		return ReturnOK;
-	if(!output)
-	{
-		return ReturnERR03;
-	}
-//	memset(output,0,8);
-	//memcpy(output+4,&Para.Pt,4);
-//*(unsigned long *)(output+4)=BCD4_Long(Para.Pt);
-	//Para.Pc[0]&=0xf0;
-	tmp = BCD4_Long(Para.Pc);
-//	tmp /=10;
-	if(Para.StatusWord &(1<<14))
-		tmp = tmp*-1;
-	memcpy(output,&tmp,8);
-	Cm_Ram_Inter(output,8);
 	return ReturnOK;
 }
 
@@ -1141,31 +1037,6 @@ uint8_t Judge_MaxLen(unsigned char *input,unsigned char *output)
 	return ReturnERR15;
 }
 
-uint8_t GetAngle_back(uint16_t Flag)
-{
-	if(Flag==GetPropP_Req)
-	{
-		if(OrderRecord[SMLRecord[1].record_num+1].OLStartAdd && OrderRecord[SMLRecord[1].record_num+1].OLLength==3)
-		{
-			SMLComm.SendBuf[++SMLComm.SendPtr]=0x73;
-			++SMLComm.SendPtr;
-			RAM_Write(&(SMLComm.SendBuf[SMLComm.SendPtr]),&(SMLComm.RecBuf[OrderRecord[6].OLStartAdd]),OrderRecord[6].OLLength);//дattri
-			SMLComm.SendPtr+=OrderRecord[6].OLLength;
-			SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
-			SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
-			SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
-			SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x03;
-			SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
-			SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=0x01;
-			SMLComm.SendBuf[SMLComm.SendPtr++]=0x72;
-			SMLComm.SendBuf[SMLComm.SendPtr++]=0x52;SMLComm.SendBuf[SMLComm.SendPtr++]=0;//0xff; //1位
-			SMLComm.SendBuf[SMLComm.SendPtr++]=0x62;SMLComm.SendBuf[SMLComm.SendPtr++]=Unit_deg;
-			SMLComm.SendBuf[SMLComm.SendPtr]=0x01;
-		}
-	}
-	return ReturnOK;
-}
-
 uint8_t GetAngle1(unsigned char *input,unsigned char *output)
 {
 	int64_t tmp;
@@ -1261,7 +1132,8 @@ uint8_t GetAngle5(unsigned char *input,unsigned char *output)
 	return ReturnOK;
 }
 
-uint8_t GetFre(unsigned char *input,unsigned char *output)
+
+uint8_t GetIa(unsigned char *input,unsigned char *output)
 {
 	unsigned int tmp;
 	if(input)
@@ -1271,10 +1143,39 @@ uint8_t GetFre(unsigned char *input,unsigned char *output)
 		return ReturnERR03;
 	}
 	memset(output,0,8);
-	//memcpy(output+4,&Para.Pt,4);
-//*(unsigned long *)(output+4)=BCD4_Long(Para.Pt);
-//	Para.Pc[0]&=0xf0;
-	tmp = BCD2_Word(Para.Freq);
+	tmp = BCD4_Long(Para.Ia);
+	memcpy(output+4,&tmp,4);
+	Cm_Ram_Inter(output+4,4);
+	return ReturnOK;
+}
+
+uint8_t GetIb(unsigned char *input,unsigned char *output)
+{
+	unsigned int tmp;
+	if(input)
+		return ReturnOK;
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+	memset(output,0,8);
+	tmp = BCD4_Long(Para.Ib);
+	memcpy(output+4,&tmp,4);
+	Cm_Ram_Inter(output+4,4);
+	return ReturnOK;
+}
+
+uint8_t GetIc(unsigned char *input,unsigned char *output)
+{
+	unsigned int tmp;
+	if(input)
+		return ReturnOK;
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+	memset(output,0,8);
+	tmp = BCD4_Long(Para.Ic);
 	memcpy(output+4,&tmp,4);
 	Cm_Ram_Inter(output+4,4);
 	return ReturnOK;
@@ -1303,6 +1204,89 @@ uint8_t SetCoverFlag(uint16_t Flag)
 		E2P_WData(OpenTCoverCnt,tmp_z,2);
 		E2P_WData(OpenCoverCnt,tmp_z,2);
 	}
+	return ReturnOK;
+}
+uint8_t GetFre(unsigned char *input,unsigned char *output)
+{
+	unsigned int tmp;
+	if(input)
+		return ReturnOK;
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+	memset(output,0,8);
+	//memcpy(output+4,&Para.Pt,4);
+//*(unsigned long *)(output+4)=BCD4_Long(Para.Pt);
+//	Para.Pc[0]&=0xf0;
+	tmp = BCD2_Word(Para.Freq);
+	memcpy(output+4,&tmp,4);
+	Cm_Ram_Inter(output+4,4);
+	return ReturnOK;
+}
+uint8_t GetSa(unsigned char *input,unsigned char *output)
+{
+	int64_t tmp;
+	if(input)
+		return ReturnOK;
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+//	memset(output,0,8);
+	//memcpy(output+4,&Para.Pt,4);
+//*(unsigned long *)(output+4)=BCD4_Long(Para.Pt);
+//	Para.Pa[0]&=0xf0;
+	tmp = BCD4_Long(Para.Pa);
+	tmp /=10;
+	if(Para.StatusWord &(1<<12))
+		tmp = tmp*-1;
+	memcpy(output,&tmp,8);
+	Cm_Ram_Inter(output,8);
+	return ReturnOK;
+}
+
+uint8_t GetSb(unsigned char *input,unsigned char *output)
+{
+	int64_t tmp;
+	if(input)
+		return ReturnOK;
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+//	memset(output,0,8);
+	//memcpy(output+4,&Para.Pt,4);
+//*(unsigned long *)(output+4)=BCD4_Long(Para.Pt);
+	//Para.Pb[0]&=0xf0;
+	tmp = BCD4_Long(Para.Pb);
+	tmp /=10;
+	if(Para.StatusWord &(1<<13))
+		tmp = tmp*-1;
+	memcpy(output,&tmp,8);
+	Cm_Ram_Inter(output,8);
+	return ReturnOK;
+}
+
+uint8_t GetSc(unsigned char *input,unsigned char *output)
+{
+	int64_t tmp;
+	if(input)
+		return ReturnOK;
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+//	memset(output,0,8);
+	//memcpy(output+4,&Para.Pt,4);
+//*(unsigned long *)(output+4)=BCD4_Long(Para.Pt);
+	//Para.Pc[0]&=0xf0;
+	tmp = BCD4_Long(Para.Pc);
+	tmp /=10;
+	if(Para.StatusWord &(1<<14))
+		tmp = tmp*-1;
+	memcpy(output,&tmp,8);
+	Cm_Ram_Inter(output,8);
 	return ReturnOK;
 }
 
@@ -1352,53 +1336,61 @@ uint8_t Get_Certificate1(unsigned char *input,unsigned char *output)
 		}
 		return ReturnOK;
 }
-
-uint8_t GetIa(unsigned char *input,unsigned char *output)
+uint8_t Get_P_Sig_val(unsigned char *input,unsigned char *output)
 {
-	unsigned int tmp;
-	if(input)
-		return ReturnOK;
-	if(!output)
+	if(m_Mesure.signature_val[0])
 	{
-		return ReturnERR03;
+		memcpy(output,&m_Mesure.value,8);
+		return ReturnOK;
 	}
-	memset(output,0,8);
-	tmp = BCD4_Long(Para.Ia);
-	memcpy(output+4,&tmp,4);
-	Cm_Ram_Inter(output+4,4);
-	return ReturnOK;
+	else
+		return ReturnERR15;
+		
 }
 
-uint8_t GetIb(unsigned char *input,unsigned char *output)
+uint8_t Get_P_Sig_sts(unsigned char *output)
 {
-	unsigned int tmp;
-	if(input)
-		return ReturnOK;
-	if(!output)
-	{
-		return ReturnERR03;
-	}
-	memset(output,0,8);
-	tmp = BCD4_Long(Para.Ib);
-	memcpy(output+4,&tmp,4);
-	Cm_Ram_Inter(output+4,4);
-	return ReturnOK;
+	memcpy(output,&m_Mesure.sts,4);
 }
 
-uint8_t GetIc(unsigned char *input,unsigned char *output)
+uint8_t Get_P_Sig_time(unsigned char *output)
 {
-	unsigned int tmp;
-	if(input)
-		return ReturnOK;
-	if(!output)
+	memcpy(output,&m_Mesure.capture_time,4);
+}
+
+
+uint8_t Get_P_Signature(unsigned char *output)
+{
+	memcpy(output,m_Mesure.signature_val,64);
+}
+
+
+uint8_t Get_N_Sig_val(unsigned char *input,unsigned char *output)
+{
+	if(m_Mesure_n.signature_val[0])
 	{
-		return ReturnERR03;
+		memcpy(output,&m_Mesure_n.value,8);
+		return ReturnOK;
 	}
-	memset(output,0,8);
-	tmp = BCD4_Long(Para.Ic);
-	memcpy(output+4,&tmp,4);
-	Cm_Ram_Inter(output+4,4);
-	return ReturnOK;
+	else
+		return ReturnERR15;
+		
+}
+
+uint8_t Get_N_Sig_sts(unsigned char *output)
+{
+	memcpy(output,&m_Mesure_n.sts,4);
+}
+
+uint8_t Get_N_Sig_time(unsigned char *output)
+{
+	memcpy(output,&m_Mesure_n.capture_time,4);
+}
+
+
+uint8_t Get_N_Signature(unsigned char *output)
+{
+	memcpy(output,m_Mesure_n.signature_val,64);
 }
 
 uint8_t GetLastPn(unsigned char *input,unsigned char *output)

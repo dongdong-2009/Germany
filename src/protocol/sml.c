@@ -3,7 +3,7 @@
 #include "typeE2p.h"
 
 //SMLRECORD SMLRecord[20];
-SMLRECORD SMLRecord[6];
+SMLRECORD SMLRecord[4];
 ORDERRECORD	OrderRecord[16];
 ORDERRECORD	OrderRecord0100[10];
 SIGNATURE Signatrue;
