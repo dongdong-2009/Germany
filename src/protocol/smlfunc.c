@@ -990,45 +990,101 @@ uint8_t ReSetLast(uint16_t Flag)
 
 uint8_t Judge_Day(unsigned char *input,unsigned char *output)
 {
-	if(input==0)
+	unsigned char Write_Buff[8];
+	uint64_t LongData;
+	if(input)
+		return ReturnOK;
+	if(!output)
 	{
-		//--SMLComm.SendPtr;
-		if(Para.P0_day==0)
-			return ReturnERR23;
-	}	
+		return ReturnERR03;
+	}
+	memset(output,0,8);
+	memcpy(Write_Buff,&Para.P0_day,6);
+  LongData = BCD2_Word(Write_Buff+4)*100000000;
+	LongData +=BCD4_Long(Write_Buff);
+	//LongData = LongData>>8;
+	if(LongData==0)
+	{
+		return ReturnERR23;
+	}
+//	LongData = LongData*10;
+	memcpy(output,&LongData,8);
+	Cm_Ram_Inter(output,8);
 	return ReturnOK;
 }
 
 uint8_t Judge_Week(unsigned char *input,unsigned char *output)
 {
-	if(input==0)
+	unsigned char Write_Buff[8];
+	uint64_t LongData;
+	if(input)
+		return ReturnOK;
+	if(!output)
 	{
-	//	--SMLComm.SendPtr;
-		if(Para.P0_week==0)
-			return ReturnERR23;
-	}	
+		return ReturnERR03;
+	}
+	memset(output,0,8);
+	memcpy(Write_Buff,&Para.P0_week,6);
+  LongData = BCD2_Word(Write_Buff+4)*100000000;
+	LongData +=BCD4_Long(Write_Buff);
+	//LongData = LongData>>8;
+	if(LongData==0)
+	{
+		return ReturnERR23;
+	}
+//	LongData = LongData*10;
+	memcpy(output,&LongData,8);
+	Cm_Ram_Inter(output,8);
 	return ReturnOK;
 }
 
 uint8_t Judge_Month(unsigned char *input,unsigned char *output)
 {
-	if(input==0)
+	unsigned char Write_Buff[8];
+	uint64_t LongData;
+	if(input)
+		return ReturnOK;
+	if(!output)
 	{
-		//--SMLComm.SendPtr;
-		if(Para.P0_month==0)
-			return ReturnERR23;
-	}	
+		return ReturnERR03;
+	}
+	memset(output,0,8);
+	memcpy(Write_Buff,&Para.P0_month,6);
+  LongData = BCD2_Word(Write_Buff+4)*100000000;
+	LongData +=BCD4_Long(Write_Buff);
+	//LongData = LongData>>8;
+	if(LongData==0)
+	{
+		return ReturnERR23;
+	}
+	//LongData = LongData*10;
+	memcpy(output,&LongData,8);
+	Cm_Ram_Inter(output,8);
 	return ReturnOK;
 }
 
 uint8_t Judge_Year(unsigned char *input,unsigned char *output)
 {
-	if(input==0)
+	unsigned char Write_Buff[8];
+	uint64_t LongData;
+	if(input)
+		return ReturnOK;
+	if(!output)
 	{
-		//--SMLComm.SendPtr;
-		if(Para.P0_year==0)
-			return ReturnERR23;
-	}	
+		return ReturnERR03;
+	}
+	memset(output,0,8);
+	memcpy(Write_Buff,&Para.P0_year,6);
+  LongData = BCD2_Word(Write_Buff+4)*100000000;
+	LongData +=BCD4_Long(Write_Buff);
+	//LongData = LongData>>8;
+	if(LongData==0)
+	{
+		return ReturnERR23;
+	}
+	//LongData = LongData*10;
+	memcpy(output,&LongData,8);
+	Cm_Ram_Inter(output,8);
 	return ReturnOK;
 }
 
@@ -1408,14 +1464,15 @@ uint8_t GetLastPn(unsigned char *input,unsigned char *output)
 		return ReturnERR03;
 	}
 	memset(output,0,8);
-	E2P_RECData(Write_Buff,Last_EC_Pp0,6);
+	memcpy(Write_Buff,&Para.P0_last,6);
   LongData = BCD2_Word(Write_Buff+4)*100000000;
 	LongData +=BCD4_Long(Write_Buff);
-	LongData = LongData>>8;
+	//LongData = LongData>>8;
 	if(LongData==0)
 	{
 		return ReturnERR23;
 	}
+//	LongData = LongData*10;
 	memcpy(output,&LongData,8);
 	Cm_Ram_Inter(output,8);
 	return ReturnOK;
