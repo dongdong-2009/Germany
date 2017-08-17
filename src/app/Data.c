@@ -209,7 +209,8 @@ const unsigned short Crc16tab[256] = {
 #endif
 const uint8_t DeviceClass[8]={0x81,0x81,0xc7,0x82,0x60,0xff};
 const uint8_t Manufacture[4]={"LOG"};
-const uint8_t firmware_version[]="STC868IRANDR01VS1";
+//const uint8_t firmware_version[]="STC868IRANDR01VS1";
+uint8_t firmware_version[]="170815";
 uint8_t Z1_M[16];
 const SMLOBISTAB	SMLOBISTab[]=
 {
@@ -247,7 +248,8 @@ const SMLOBISTAB	SMLOBISTab[]=
 	0x01,0x00,0x5E,0x31,0x01,0x06, Len1,0x42,E2P_ProtectionPINCode,				0x80+READ+WRITE,1,0,Unit_FF,NULL,NULL,
 	0x01,0x00,0x5E,0x31,0x01,0x07, Len4,0x05,DisPINAdd,										E2P_TYPE+WRITE,1,0,Unit_FF,Judge_PINCODE,NULL,
 	0x01,0x00,0x60,0x32,0x01,0x01, 3,  		0x04,(uint32_t)Manufacture,								RAM_TYPE+READ,1,0,Unit_FF,NULL,NULL,
-	0x01,0x00,0x00,0x02,0x00,0x00, 17,		0x81,(uint32_t)firmware_version,  				RAM_TYPE+READ,			1,0,Unit_FF,NULL,NULL,
+	//0x01,0x00,0x00,0x02,0x00,0x00, 17,		0x81,(uint32_t)firmware_version,  				RAM_TYPE+READ,			1,0,Unit_FF,NULL,NULL,
+	0x01,0x00,0x00,0x02,0x00,0x00, 6,			7,(uint32_t)firmware_version,  				RAM_TYPE+READ,			1,0,Unit_FF,NULL,NULL,
 	0x01,0x00,0x00,0x02,0x00,0x02, 17,		0x81,(uint32_t)firmware_version,  				RAM_TYPE+READ+XPERMIT,			1,0,Unit_FF,NULL,NULL,
 	0x01,0x00,0x00,0x02,0x00,0x03, 17,		0x81,(uint32_t)firmware_version,  				RAM_TYPE+READ+XPERMIT,			1,0,Unit_FF,NULL,NULL,
 	0x01,0x00,0x00,0x02,0x00,0x04, 17,		0x81,(uint32_t)firmware_version,  				RAM_TYPE+READ+XPERMIT,			1,0,Unit_FF,NULL,NULL,

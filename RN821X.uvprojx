@@ -554,9 +554,9 @@
               <FilePath>.\src\protocol\smlfunc.c</FilePath>
             </File>
             <File>
-              <FileName>iec1107.c</FileName>
+              <FileName>iec1107_2.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\src\protocol\iec1107.c</FilePath>
+              <FilePath>.\src\protocol\iec1107_2.c</FilePath>
             </File>
           </Files>
         </Group>

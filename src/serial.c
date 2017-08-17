@@ -77,7 +77,8 @@ struct S_Serial_ m_sserial5;
 static uint8_t *buf_pos;
 void udelay(uint32_t us)
 {
-	uint32_t kk,i;
+	uint32_t i;
+	uint8_t kk;
 	for(i=0;i<us;++i)
 	{
 		for(kk=0;kk<20;++kk)
@@ -320,15 +321,14 @@ uint16_t Serial_Read(uint8_t ch,uint8_t *buf,uint16_t len)
 		p_serial->rx_pos++;
 		p_serial->rx_pos%=buf_len;
 		i++;
-		
 		if(i>=len || ((i!=1) && (buf[i-1]==0x7e)))
 			break;
 #pragma GCC push_options
-#pragma GCC optimize ("O1")	
+#pragma GCC optimize ("O1")
 		if(ch==0)
 		{	
 			if(p_serial->rx_len==p_serial->rx_pos)
-				udelay(10);
+				udelay(30);
 		}
 #pragma GCC pop_options
 	}

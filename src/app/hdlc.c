@@ -112,12 +112,12 @@ void InitServerId(void)
 #else
 	memcpy(m_lmn_info.b_sub_identification+2,Manufacture,3);
 	memcpy(m_lmn_info.b_sub_identification+7,"STC",3);
-//	memcpy(m_lmn_info.b_sensor_identification,m_lmn_info.b_sub_identification,10);
-	memset(m_lmn_info.b_sensor_identification,0xff,10);
+	memcpy(m_lmn_info.b_sensor_identification,m_lmn_info.b_sub_identification,10);
+//	memset(m_lmn_info.b_sensor_identification,0xff,10);
 #endif	
 //	m_lmn_info.b_sensor_identification[9]=0x18;
 	m_lmn_info.b_hdlc_LMN_Addr=2;
-	i_Meter_Addr = 68;
+	i_Meter_Addr = 2;
 	m_lmn_info.b_hdlc_slot = 1;
 	//E2P_WData(E2P_Manufactor_ID,"STC",3);
 	E2P_WData(E2P_Manufactor_ID,"LOG",3);
@@ -160,7 +160,10 @@ uint16_t DoCrc16(uint16_t RegInit, uint8_t *pucData, uint16_t usDataLen)
   uint16_t crc;
   crc = 0xffff;
   while( usDataLen-- > 0 )
-    crc = MP_FCS(crc,*pucData++);
+  {
+		crc = (crc >> 8) ^ Crc16tab[(crc ^ *pucData++) & 0xff];
+		//crc = MP_FCS(crc,*pucData++);
+	}
   crc ^= 0xFFFF;
   
   return crc;
@@ -183,9 +186,14 @@ uint16_t Cm_Handle_Assign_Addr(uint8_t* buf,uint16_t len)
 		Addr_Num++;
 		if(Data_Comp(buf+i+2,((uint8_t *)&m_lmn_info)+2,30)==0)
 		{
-			m_lmn_info.b_hdlc_LMN_Addr=i_Meter_Addr=p_info->b_hdlc_LMN_Addr;
+			m_lmn_info.b_hdlc_LMN_Addr=p_info->b_hdlc_LMN_Addr;
 			m_lmn_info.b_hdlc_slot = p_info->b_hdlc_slot;
-			i_Meter_Addr = m_lmn_info.b_hdlc_LMN_Addr;
+			if(i_Meter_Addr!=m_lmn_info.b_hdlc_LMN_Addr)
+			{
+				i_Meter_Addr = m_lmn_info.b_hdlc_LMN_Addr;
+				i_Meter_Prot=HDLC_UI_PROTOCOL_ADDR_ASSIGN;
+				return 1;
+			}
 			flag=1;
 			break;
 		}
@@ -532,10 +540,12 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 		case HDLC_SNRM:
 			b_seq=0x10;
 			Connected=255;
+		  pre_hdlc_len=0;
+		  i_send_len=0;
 		//	SetKeyTime(120);
 			ui_flag=1;
 			buf[ptr++]=HDLC_UA;
-#if 0		
+#if 1		
 			if(i_Meter_Prot==HDLC_I_PROTOCOL_TLS_COSEM)
 			{
 				SetKeyTime(120);
@@ -555,6 +565,8 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 		case HDLC_DISC:
 			b_seq=0x10;
 			Connected=0;
+			pre_hdlc_len=0;
+		  i_send_len=0;
 			buf[ptr++]=HDLC_DM;
 			if(i_Meter_Prot==HDLC_I_PROTOCOL_TLS_COSEM)
 			{
@@ -599,6 +611,7 @@ void CM_HDLC_Receive(void)
 	{
 		Connected=0;
 		m_lmn_info.b_hdlc_LMN_Addr=3;
+		i_Meter_Addr=3;
 		Close_tls();
 	//	Reset_Certificate();
 		ms_count=0;
@@ -643,15 +656,15 @@ void CM_HDLC_Receive(void)
 	{
 		i_rx_length=Serial_Read(b_Hdlc_buf,11);
 	}*/
-	#if 1 //test delete
+	#if 0 //test delete
 	if(i_rx_length==0)
 	{
 		if((ms_count&0xfffffff0) && i_rx_len)
 			i_rx_len=0;
 		return;
 	}
-	ms_count=0;
 	#endif
+	ms_count=0;
 	i_rx_len+=i_rx_length;
 	if(i_rx_len<11)
 		return;
@@ -794,11 +807,13 @@ void CM_HDLC_Receive(void)
 							}
 						}
 					}
+					return;
 		}
-		else if(i_Meter_Addr==LMN_Addr && ControlByte==HDLC_I) //µØÖ·Æ¥Åä
+		//else 
+		if(i_Meter_Addr==LMN_Addr && ControlByte==HDLC_I) //µØÖ·Æ¥Åä
 		{
-			ms_count=0;
-			res_count=1;
+			//ms_count=0;
+	//		res_count=1;
 			hdlc_back=0;
 		//	udelay(50);
 			//SystemDelay(300);
@@ -926,7 +941,7 @@ void CM_HDLC_Receive(void)
 				i_send_length=HDLC_Assemble(b_short_frame,0);
 				HDLC_WRITE(b_short_frame,i_send_length);
 			}*/
-			res_count=ms_count+1;
+//			res_count=ms_count+1;
 	//		Serial_Read(b_Hdlc_buf,256);
 			/*if(res_count>5000)
 			{
@@ -982,6 +997,6 @@ void CM_HDLC_Receive(void)
 #endif
 		}
 	}
-	//memset(b_Hdlc_buf,0,256);
+
 	return;
 }
