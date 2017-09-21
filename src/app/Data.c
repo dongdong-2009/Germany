@@ -210,7 +210,7 @@ const unsigned short Crc16tab[256] = {
 const uint8_t DeviceClass[8]={0x81,0x81,0xc7,0x82,0x60,0xff};
 const uint8_t Manufacture[4]={"LOG"};
 //const uint8_t firmware_version[]="STC868IRANDR01VS1";
-uint8_t firmware_version[]="170815";
+uint8_t firmware_version[]="170818";
 uint8_t Z1_M[16];
 const SMLOBISTAB	SMLOBISTab[]=
 {

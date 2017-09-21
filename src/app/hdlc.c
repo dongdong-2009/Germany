@@ -33,7 +33,7 @@ uint8_t b_Hdlc_buf[1024]={0x7E,0xA0,0x74,0x88,0x03,0x02,0x03,0x10,0xAA,0xC6,0x16
 uint8_t b_Hdlc_buf[768];
 #endif
 
-uint8_t b_Hdlc_sendbuf[576];
+uint8_t b_Hdlc_sendbuf[640];
 #if 0
 uint8_t sml_test[256]={0x1B,0x1B,0x1B,0x1B,0x01,0x01,0x01,0x01,0x76,0x05,0x01,0x02,0x03,0x04,0x62,0x00,
 0x62,0x00,0x72,0x65,0x00,0x00,0x01,0x01,0x76,0x01,0x0B,0x45,0x53,0x2D,0x48,0x44,
@@ -664,11 +664,11 @@ void CM_HDLC_Receive(void)
 		return;
 	}
 	#endif
-	ms_count=0;
+	
 	i_rx_len+=i_rx_length;
 	if(i_rx_len<11)
 		return;
-
+	ms_count=0;
 	i=Hdlc_Check(b_Hdlc_buf,i_rx_len);
 	if(i>0)
 	{
@@ -815,6 +815,7 @@ void CM_HDLC_Receive(void)
 			//ms_count=0;
 	//		res_count=1;
 			hdlc_back=0;
+			mcu_busy=1;
 		//	udelay(50);
 			//SystemDelay(300);
 			//seqbak = (((b_Hdlc_buf[7]>>5)&7)<<1) | ((((b_Hdlc_buf[7]>>1))&7)<<5);
@@ -841,9 +842,9 @@ void CM_HDLC_Receive(void)
 			switch(i_Meter_Prot)
 			{
 				case HDLC_I_PROTOCOL_TLS_COSEM:
-					mcu_busy=1;
+					//mcu_busy=1;
 					i_send_len=Cm_Tls_Analys(b_Hdlc_buf+10,i_rx_length,b_Hdlc_sendbuf+10,&hdlc_back);
-					mcu_busy=0;
+					//mcu_busy=0;
 					#if 0				
 					if(hdlc_back)
 					{
@@ -934,6 +935,7 @@ void CM_HDLC_Receive(void)
 				default:
 					break;
 			}
+			mcu_busy=0;
 			/*
 			if(i_send_len==0)
 			{

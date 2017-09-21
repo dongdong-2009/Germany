@@ -117,6 +117,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
+          <Name>/</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -150,7 +151,7 @@
           <Type>0</Type>
           <LineNumber>1012</LineNumber>
           <EnabledFlag>0</EnabledFlag>
-          <Address>14770</Address>
+          <Address>14042</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
