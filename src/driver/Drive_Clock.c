@@ -35,6 +35,7 @@ void fnDl645MainClock_Init( void )
 	//SYSCTL->MOD0_EN = 0x0b54;
 	//SYSCTL->MOD0_EN = 0x0b5c;
 	//SYSCTL->MOD1_EN = 0x0fe0;
+	SYSCTL->ADC_CTRL=0x1ff;
 #if 0	
 	SYSCTL->MOD0_EN = (1<<8)|(1<<4)|(1<<3)|(1<<2);
 	SYSCTL->MOD0_EN |= (1<<7);
@@ -49,6 +50,7 @@ void fnDl645MainClock_Init( void )
 	SYSCTL->MOD1_EN = (1<<10)|(1<<9)|(1<<5);
 	//SYSCTL->MOD1_EN = (1<<9)|(1<<5);
 	SYSCTL->MOD1_EN |=(1<<4) | (1<<0);
+	SYSCTL->MOD1_EN |=(1<<7);
 #endif	
 //	SYSCTL->INTC_EN = 0x01ff;
 	SYSCTL->KBI_EN = 0x0000;

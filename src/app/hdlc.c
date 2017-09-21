@@ -213,7 +213,11 @@ uint16_t Cm_Handle_Assign_Addr(uint8_t* buf,uint16_t len)
 		else
 		{
 			//i_Meter_Addr=35+j*10;
-			i_Meter_Addr = rand();
+			i_Meter_Addr = EMU->TRNG;//rand();
+			if(i_Meter_Addr>0x7e)
+			{
+				i_Meter_Addr %=0x7e;
+			}
 		}
 		for(i=0,flag=1;i<Addr_Num;++i)
 		{
@@ -966,7 +970,10 @@ void CM_HDLC_Receive(void)
 			switch(i_Meter_Prot)
 			{
 				case HDLC_UI_PROTOCOL_ADDR_ASSIGN:
-					mdelay(rand()%10);
+					if(m_lmn_info.b_hdlc_slot)
+						mdelay((m_lmn_info.b_hdlc_slot-1)*10);
+					else
+						mdelay(EMU->TRNG%300);
 					break;
 				case HLDC_UI_PROTOCOL_ADDR_VERIFY:
 					//mdelay(5);
