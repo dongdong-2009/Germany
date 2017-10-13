@@ -233,7 +233,7 @@ uint16_t Cm_Handle_Assign_Addr(uint8_t* buf,uint16_t len)
 		if(flag)
 			break;
 	}
-	m_lmn_info.b_hdlc_slot=0;
+//	m_lmn_info.b_hdlc_slot=0;
 	m_lmn_info.b_hdlc_LMN_Addr=i_Meter_Addr;
 	return 1;
 }
@@ -543,7 +543,7 @@ uint16_t HDLC_Assemble(uint8_t *buf,uint16_t Len)
 			break;
 		case HDLC_SNRM:
 			b_seq=0x10;
-			Connected=255;
+			Connected=1;
 		  pre_hdlc_len=0;
 		  i_send_len=0;
 		//	SetKeyTime(120);
@@ -974,6 +974,7 @@ void CM_HDLC_Receive(void)
 						mdelay((m_lmn_info.b_hdlc_slot-1)*10);
 					else
 						mdelay(EMU->TRNG%300);
+					m_lmn_info.b_hdlc_slot=0;
 					break;
 				case HLDC_UI_PROTOCOL_ADDR_VERIFY:
 					//mdelay(5);

@@ -359,6 +359,11 @@ uint8_t *GetMKey(void)
 	return m_tlscontext.aes_key;
 }
 
+uint32_t Get_Tls_status(void)
+{
+	return m_tlscontext.crypto_created;
+}
+
 void Close_tls(void)
 {
 	m_tlscontext.crypto_created=0;
