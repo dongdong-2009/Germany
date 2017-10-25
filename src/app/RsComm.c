@@ -79,3 +79,12 @@ unsigned short DoCrc16(unsigned short RegInit, unsigned char *message, unsigned 
     return CrcReg;
 } 
 #endif
+
+void Read_CPU_CRC( unsigned char* Dest )
+{
+	unsigned short CRC;
+	unsigned char *Addr;
+	Addr = Read_Flash;
+	CRC = DoCrc16(0xFFFF, Addr, 0x28000);	
+	RAM_Write( Dest, (unsigned char*)&CRC, 2 );
+}

@@ -15,7 +15,7 @@
         <TargetCommonOption>
           <Device>RN8215</Device>
           <Vendor>Renergy</Vendor>
-          <PackID>Renergy.RN821X.1.0.0</PackID>
+          <PackID>Renergy.RN8XXX.1.0.0</PackID>
           <Cpu>IRAM(0x10000000,0x4000) IROM(0x00000000,0x30000) CPUTYPE("Cortex-M0") CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>

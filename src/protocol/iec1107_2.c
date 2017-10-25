@@ -48,7 +48,7 @@ struct iec1107_s iec1107_table[IEC1107_TABLE_NUM]=
 	"1-0:1.8.00*63",(uint32_t)&Para.P0_year,10,3,
 	"1-0:1.8.00*65",(uint32_t)&Para.P0_last,10,3,	
 	"1-0:1.8.00*65",(uint32_t)firmware_version,10,7,	
-	"1-0:1.8.00*65",(uint32_t)SM.CPUCRC,10,2,	
+	"1-0:1.8.00*65",(uint32_t)SM.CPUCRC_M,10,2,	
 	"1-0:97.97.0*255",(uint32_t)&Para.meter_sts,16,4,
 };
 uint64_t strtoint(uint8_t *buf,uint8_t len,uint8_t deci)

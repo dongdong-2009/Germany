@@ -581,6 +581,7 @@ int  main ( void )
 //	fnUSART5_Init(0xe0);
 	//Serial_Open(1,600,7,SERIAL_CHECK_EVEN);
 	Serial_Open(1,9600,8,SERIAL_CHECK_NO);
+	Read_CPU_CRC(SM.CPUCRC);
 	while(1)
 	{
 		fnWDT_Restart();
