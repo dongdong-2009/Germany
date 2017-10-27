@@ -771,6 +771,7 @@ uint8_t GetU_back(uint16_t Flag)
 uint8_t GetS(unsigned char *input,unsigned char *output)
 {
 	int64_t tmp;
+	BCD4 tmp_data;
 	if(input)
 		return ReturnOK;
 	if(!output)
@@ -778,8 +779,13 @@ uint8_t GetS(unsigned char *input,unsigned char *output)
 		return ReturnERR03;
 	}
 
-	tmp = BCD4_Long(Para.Pt);
-	if(Para.StatusWord &(1<<11))
+	//tmp = BCD4_Long(Para.Pt);
+	//if(Para.StatusWord &(1<<11))
+	//	tmp = tmp*-1;
+	memcpy(tmp_data,Para.Pt,4);
+	tmp_data[2] &=0x7f;
+	tmp = BCD4_Long(tmp_data);
+	if(Para.Pt[2]&0x80)
 		tmp = tmp*-1;
 	memcpy(output,&tmp,8);
 	Cm_Ram_Inter(output,8);
@@ -1287,6 +1293,7 @@ uint8_t GetFre(unsigned char *input,unsigned char *output)
 uint8_t GetSa(unsigned char *input,unsigned char *output)
 {
 	int64_t tmp;
+	BCD4 tmp_data;
 	if(input)
 		return ReturnOK;
 	if(!output)
@@ -1297,9 +1304,14 @@ uint8_t GetSa(unsigned char *input,unsigned char *output)
 	//memcpy(output+4,&Para.Pt,4);
 //*(unsigned long *)(output+4)=BCD4_Long(Para.Pt);
 //	Para.Pa[0]&=0xf0;
-	tmp = BCD4_Long(Para.Pa);
+	//tmp = BCD4_Long(Para.Pa);
+	//if(Para.StatusWord &(1<<12))
+	//	tmp = tmp*-1;
 	//tmp /=10;
-	if(Para.StatusWord &(1<<12))
+	memcpy(tmp_data,Para.Pa,4);
+	tmp_data[2] &=0x7f;
+	tmp = BCD4_Long(tmp_data);
+	if(Para.Pa[2]&0x80)
 		tmp = tmp*-1;
 	memcpy(output,&tmp,8);
 	Cm_Ram_Inter(output,8);
@@ -1309,6 +1321,7 @@ uint8_t GetSa(unsigned char *input,unsigned char *output)
 uint8_t GetSb(unsigned char *input,unsigned char *output)
 {
 	int64_t tmp;
+	BCD4 tmp_data;
 	if(input)
 		return ReturnOK;
 	if(!output)
@@ -1319,9 +1332,14 @@ uint8_t GetSb(unsigned char *input,unsigned char *output)
 	//memcpy(output+4,&Para.Pt,4);
 //*(unsigned long *)(output+4)=BCD4_Long(Para.Pt);
 	//Para.Pb[0]&=0xf0;
-	tmp = BCD4_Long(Para.Pb);
+//	tmp = BCD4_Long(Para.Pb);
 	//tmp /=10;
-	if(Para.StatusWord &(1<<13))
+	//if(Para.StatusWord &(1<<13))
+	//	tmp = tmp*-1;
+	memcpy(tmp_data,Para.Pb,4);
+	tmp_data[2] &=0x7f;
+	tmp = BCD4_Long(tmp_data);
+	if(Para.Pb[2]&0x80)
 		tmp = tmp*-1;
 	memcpy(output,&tmp,8);
 	Cm_Ram_Inter(output,8);
@@ -1331,6 +1349,7 @@ uint8_t GetSb(unsigned char *input,unsigned char *output)
 uint8_t GetSc(unsigned char *input,unsigned char *output)
 {
 	int64_t tmp;
+	BCD4 tmp_data;
 	if(input)
 		return ReturnOK;
 	if(!output)
@@ -1341,9 +1360,14 @@ uint8_t GetSc(unsigned char *input,unsigned char *output)
 	//memcpy(output+4,&Para.Pt,4);
 //*(unsigned long *)(output+4)=BCD4_Long(Para.Pt);
 	//Para.Pc[0]&=0xf0;
-	tmp = BCD4_Long(Para.Pc);
+	//tmp = BCD4_Long(Para.Pc);
 //	tmp /=10;
-	if(Para.StatusWord &(1<<14))
+//	if(Para.StatusWord &(1<<14))
+//		tmp = tmp*-1;
+	memcpy(tmp_data,Para.Pc,4);
+	tmp_data[2] &=0x7f;
+	tmp = BCD4_Long(tmp_data);
+	if(Para.Pc[2]&0x80)
 		tmp = tmp*-1;
 	memcpy(output,&tmp,8);
 	Cm_Ram_Inter(output,8);
