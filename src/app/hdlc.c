@@ -213,7 +213,7 @@ uint16_t Cm_Handle_Assign_Addr(uint8_t* buf,uint16_t len)
 		else
 		{
 			//i_Meter_Addr=35+j*10;
-			i_Meter_Addr = EMU->TRNG;//rand();
+			i_Meter_Addr = EMU->TRNG+rand();
 			if(i_Meter_Addr>0x7e)
 			{
 				i_Meter_Addr %=0x7e;
