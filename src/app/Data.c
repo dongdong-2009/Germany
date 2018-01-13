@@ -40,6 +40,17 @@ const unsigned char TimeMaxTab[7] =
 };
 */
 
+extern uint8_t iec1107_buf[256];
+const COMMPARA CommPara[2] = 
+{
+	iec1107_buf,iec1107_buf, &Comm.Mode1, &Comm.State1,&Comm.Ptr1, &Comm.BTime1,&Comm.Bcc1,&Comm.RecTmr1,&Comm.PrgTmr1,&Flag.Run1,&Comm.TXLAST_Delay1,&Comm.Delay1,
+	iec1107_buf,iec1107_buf, &Comm.Mode1, &Comm.State1,&Comm.Ptr1, &Comm.BTime1,&Comm.Bcc1,&Comm.RecTmr1,&Comm.PrgTmr1,&Flag.Run1,&Comm.TXLAST_Delay1,&Comm.Delay1,
+};
+const BLOCKCOMMPARA BlockCommPara[2] = 
+{
+	0,0,&Comm.BlockNo1, &Comm.SendLen1,0,
+	0,0,&Comm.BlockNo1, &Comm.SendLen1, 0,
+};
 
 const unsigned char TimeMaxTab[3] =
 {
@@ -142,6 +153,24 @@ const E2Para E2PTab[4] =
 	FMAds,		0x3FF,	0x2,	0,	//FM24CL16	3V	
 #endif	
 	ProfEAds,	0x00,	0x1,	0	//24C512
+};
+
+const EXECUTETAB ExecuteTab[]=
+{
+	'F','C','0','C',1,0x0000,	WRITE+0x0C,	//´æ´¢CRC
+	
+};
+
+const CDPARATAB CDParaTab[] =
+{ 
+	'C','0','0','0','C',4,0x0000,READ+0x40,	//read out crc
+	'0','.','2','.','0',11,0x0000,READ+0x28,	//read version
+	'F','.','F','.','1',4,0x0000,READ+0x43,	
+	'C','0','8','8','1',10,Server_ID,READ+0x85,	//identification of user
+	'C','0','8','8','2',16,E2P_SymmetricalKey,READ+WRITE+0x83,
+	'C','0','8','8','3',16,E2P_Default_Mkey,READ+WRITE+0x83,
+	'C','0','8','8','4',32,E2P_Default_PKey,READ+WRITE+0x80,
+	'C','0','8','8','0',10,User_ID,WRITE+0x23,	//identification of user
 };
 
 #define	READ	0x8000

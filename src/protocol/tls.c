@@ -316,7 +316,7 @@ void Cm_Make_Public_Key(void)
 	return;
 }
 
-const uint8_t initKey[16]={0xA4,0x45,0x7D,0x73,0xF3,0xA8,0xED,0x56,0xB7,0x22,0x68,0xD9,0xB5,0x23,0x0F,0x7A};
+uint8_t initKey[16]={0xA4,0x45,0x7D,0x73,0xF3,0xA8,0xED,0x56,0xB7,0x22,0x68,0xD9,0xB5,0x23,0x0F,0x7A};
 //const uint8_t initKey[16]={0x88,0x1e,0xa0,0x8c,0x49,0x5f,0x18,0x9d,0xcb,0x8e,0xfb,0x15,0xe6,0x15,0x90,0xfc};
 int ResetCryto(void)
 {
@@ -521,6 +521,20 @@ void Cm_Signature(const uint8_t *pri,uint8_t *in,uint32_t Len,uint8_t *out)
 	E2P_WData(PublicKey_Y,m_tlscontext.public_key,64);*/
 }
 
+void Write_PublicKey()
+{
+		int ret;
+	E2P_RData(sign_out,E2P_Default_PKey,32);
+		ret=uECC_compute_public_key(sign_out,m_tlscontext.public_key,p_curve);
+		if(ret)
+		{
+			Cm_Ram_Inter(m_tlscontext.public_key,32);
+			Cm_Ram_Inter(m_tlscontext.public_key+32,32);
+			SystemDelay(200);
+			E2P_WData(PublicKey_Y,m_tlscontext.public_key,64);
+		}
+}
+
 int tls_Init(void)
 {
 	unsigned char *privateK;
@@ -551,17 +565,23 @@ int tls_Init(void)
 		b_lmn_cert=Get_LMN_Cert();
 
 		E2P_RData(m_tlscontext.aes_key,E2P_SymmetricalKey,16);
+		E2P_RData(initKey,E2P_Default_Mkey,16);
 		if((m_tlscontext.aes_key[0]==0) && (m_tlscontext.aes_key[1]==0))
 			memcpy(m_tlscontext.aes_key,initKey,16);
 		
 		uECC_set_rng(ecc_rng);
 		p_curve = uECC_secp256r1();
-		memcpy(sign_out,b_pri,32);
-		Cm_Ram_Inter(sign_out,32);
-		uECC_compute_public_key(sign_out,m_tlscontext.public_key,p_curve);
-		Cm_Ram_Inter(m_tlscontext.public_key,32);
-		Cm_Ram_Inter(m_tlscontext.public_key+32,32);
-		E2P_WData(PublicKey_Y,m_tlscontext.public_key,64);
+		//memcpy(sign_out,b_pri,32);
+		//Cm_Ram_Inter(sign_out,32);
+		E2P_RData(sign_out,E2P_Default_PKey,32);
+		
+		result=uECC_compute_public_key(sign_out,m_tlscontext.public_key,p_curve);
+		if(result)
+		{
+			Cm_Ram_Inter(m_tlscontext.public_key,32);
+			Cm_Ram_Inter(m_tlscontext.public_key+32,32);
+			E2P_WData(PublicKey_Y,m_tlscontext.public_key,64);
+		}
 //		CmDeAES128(m_serverkey,m_serveriv,0,m_cipher,80,sign_out);
 #ifdef TEST
 		

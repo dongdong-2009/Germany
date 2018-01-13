@@ -101,6 +101,19 @@ void ProcSec(void)
 	Comm.SecPulseCnt++;
 	sec++;
 	Judge_Cryto();
+	if(SM.ECLedModeCnt==0x22)
+	{
+			if( Comm.FTime1 != 0 )
+			{
+				Comm.FTime1--;
+				if( Comm.FTime1 == 0 ) CommRest(1);			
+			}
+			if(Flag.Run1 & F_ComRest)	
+			{
+				CommRest(1);
+				Flag.Run1 &=~ F_ComRest;
+			}
+	}
 	//ID_Read(&Para.Ua[0],0x0085,DLen_3);
 //	SynData1s();
 //m_malloc_buf = malloc(10);
@@ -583,6 +596,8 @@ int  main ( void )
 	Serial_Open(1,9600,8,SERIAL_CHECK_NO);
 	Read_CPU_CRC(SM.CPUCRC);
 	Para.p_plus = 0xffffffff;
+	CommRest(1);
+	//SM.ECLedModeCnt = 0x22;
 	while(1)
 	{
 		fnWDT_Restart();
@@ -601,8 +616,14 @@ int  main ( void )
 	//	if (Flag.Clk & F_Hour) ProcHour();
 	//	if (Flag.Clk & F_Day) ProcDay();
 		CM_HDLC_Receive();
-		
-		iec1107_read();
+		if(SM.ECLedModeCnt==0x22)
+		{
+			CommMode(1);
+		}
+		else
+		{
+			iec1107_read();
+		}
 		if(Para.p_count>=Para.p_plus)
 		{
 			Para.p_count=0;

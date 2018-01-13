@@ -65,6 +65,24 @@ void mdelay(uint32_t ms)
 	gprs_ms=ms;
 	while(gprs_ms)udelay(1);
 }
+
+void Set_Lmn_Dev_Id(uint8_t *buf)
+{
+	uint64_t tmp_val;
+	uint8_t tmp_buf[8];
+	int i;
+	m_lmn_info.b_sub_identification[0]=0x0A;
+	m_lmn_info.b_sub_identification[1]=0x01;
+	memcpy(m_lmn_info.b_sub_identification+2,Manufacture,3);
+	tmp_val=0;
+	_ASC_BCD( tmp_buf, buf, 5);	
+	tmp_val=BCD4_Long(tmp_buf);
+	for(i=0;i<5;++i)
+	{
+		m_lmn_info.b_sub_identification[9-i]=(tmp_val>>(i*8))&0xff;
+	}
+	E2P_WData( Server_ID,m_lmn_info.b_sub_identification, 10 );
+}
 void InitServerId(void)
 {
 	i_rx_len=0;
@@ -76,13 +94,15 @@ void InitServerId(void)
 	res_count=0;
 	//memset(b_Hdlc_buf,0,512);
 	memset(b_Hdlc_sendbuf,0,512);
-	E2P_WData(Server_ID+10,b_Hdlc_sendbuf,4);
+	//E2P_WData(Server_ID+10,b_Hdlc_sendbuf,4);
 	hdlc_back=0;
 #ifdef TEST	
 	hdlc_back=tls_back_fun;
 #endif
 	//i_rx_len=120;
-	
+	E2P_RData(m_lmn_info.b_sub_identification,Server_ID,10);
+	if(m_lmn_info.b_sub_identification[0]==0)
+	{
 	m_lmn_info.b_sub_identification[0]=0x0A;
 	m_lmn_info.b_sub_identification[1]=0x01;
 #if 0	
@@ -112,6 +132,7 @@ void InitServerId(void)
 #else
 	memcpy(m_lmn_info.b_sub_identification+2,Manufacture,3);
 	memcpy(m_lmn_info.b_sub_identification+7,"STC",3);
+}
 	memcpy(m_lmn_info.b_sensor_identification,m_lmn_info.b_sub_identification,10);
 //	memset(m_lmn_info.b_sensor_identification,0xff,10);
 #endif	
@@ -138,7 +159,7 @@ void InitServerId(void)
 	E2P_WData(E2P_Director,(unsigned char*)&i_rx_len,1);
 	i_rx_len=0;
 	i_send_len=0;
-	E2P_WData( Server_ID,m_lmn_info.b_sub_identification, 10 ); 
+	//E2P_WData( Server_ID,m_lmn_info.b_sub_identification, 10 ); 
 //	E2P_RData(keytext,E2P_SymmetricalKey,16);
 //	E2P_WData(E2P_SymmetricalKey,keytext,16);
 }
