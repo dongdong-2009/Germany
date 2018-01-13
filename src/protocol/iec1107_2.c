@@ -133,6 +133,8 @@ void iec1107_read(void)
 {
 	uint16_t len,pos,i,j,p;
 	uint64_t tmp;
+	uint32_t LongData;
+	
 	if(iec1107_buf_pos>250)
 		iec1107_buf_pos=0;
 	len=IEC1107_READ(iec1107_buf+iec1107_buf_pos,250-iec1107_buf_pos);
@@ -188,6 +190,16 @@ void iec1107_read(void)
 						}
 					}
 					Para.meter_sts |=0x4;
+					LongData = BCD4_Long( Para.Pt);	//¹¦ÂÊÌõ
+					Para.pval = LongData/10;
+					if(LongData>30)
+					{
+						Para.p_plus = 3600000/LongData;
+					}
+					else
+					{
+						Para.p_plus = 0xffffffff;
+					}
 				}
 		//		memset(iec1107_buf,0,128);
 				Comm.BTime2=20;
@@ -204,6 +216,7 @@ void iec1107_read(void)
 		if((IEC1107_STATUS==0) && (ieccmd_ptr<2) && ((Comm.BTime2==0)))
 		{
 			iec1107_buf_pos=0;
+			Para.p_count=0;
 			iec1107_write();
 		}
 	}

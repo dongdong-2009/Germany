@@ -611,15 +611,7 @@ void CM_HDLC_Receive(void)
 //	uint8_t seqbak;
 	//uint8_t ControlByte;
 	//uint8_t *send_ptr;
-	if(ms_count>30000)
-	{
-		Connected=0;
-		m_lmn_info.b_hdlc_LMN_Addr=3;
-		i_Meter_Addr=3;
-		Close_tls();
-	//	Reset_Certificate();
-		ms_count=0;
-	}
+	
 #ifdef TEST	
 	if(hdlc_back)
 	{
@@ -660,9 +652,15 @@ void CM_HDLC_Receive(void)
 	{
 		i_rx_length=Serial_Read(b_Hdlc_buf,11);
 	}*/
-	#if 0 //test delete
+	#if 1 //test delete
 	if(i_rx_length==0)
 	{
+		if(ms_count>30000)
+		{
+			Connected=0;
+			Close_tls();
+			ms_count=0;
+		}
 		if((ms_count&0xfffffff0) && i_rx_len)
 			i_rx_len=0;
 		return;

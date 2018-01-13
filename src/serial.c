@@ -178,7 +178,8 @@ void DMA_HANDLER(void)
 		else
 		{
 			while((UART1->STA & 0x300)!=0x100) __NOP(); 
-			while((UART1->STA&02)==0) __NOP();
+			//while((UART1->STA&02)==0) __NOP();
+			UART0->STA  |=0x02;
 			UART1->CTRL |=0x02;
 		}
 #if 0		
@@ -301,7 +302,7 @@ int16_t Serial_Write(uint8_t ch,uint8_t *buf,uint16_t len)
 }
 uint16_t Serial_Read(uint8_t ch,uint8_t *buf,uint16_t len)
 {
-	uint16_t i;
+	uint16_t i,k,j;
 	uint16_t buf_len;
 	struct S_Serial_ *p_serial;
 	i=0;
@@ -317,16 +318,56 @@ uint16_t Serial_Read(uint8_t ch,uint8_t *buf,uint16_t len)
 	}
 	while(p_serial->rx_len!=p_serial->rx_pos)
 	{
+#if 0		
 		buf[i]=p_serial->serial_rx_buf[p_serial->rx_pos];
 		p_serial->rx_pos++;
 		p_serial->rx_pos%=buf_len;
 		i++;
-		if(i>=len || ((i!=1) && (buf[i-1]==0x7e)))
-			break;
+#else
+		k = p_serial->rx_len;
+		if(k>p_serial->rx_pos)
+		{
+			j=k-p_serial->rx_pos;
+			memcpy(buf+i,p_serial->serial_rx_buf+p_serial->rx_pos,j);
+			//i +=j;
+			p_serial->rx_pos +=j;
+			p_serial->rx_pos%=buf_len;
+		}
+		else
+		{
+			j=buf_len-p_serial->rx_pos;
+			memcpy(buf+i,p_serial->serial_rx_buf+p_serial->rx_pos,j);
+			//i +=j;
+			p_serial->rx_pos =0;
+			
+		}
+		i += j;
+#endif		
+//		if(i>=len || ((i!=1) && (buf[i-1]==0x7e)))
+	//		break;
 #pragma GCC push_options
 #pragma GCC optimize ("O1")
+/*		
 		if(ch==0)
 		{	
+			if(p_serial->rx_len==p_serial->rx_pos)
+				udelay(30);
+		}*/
+		if(i>=len)
+			break;
+		if(ch==0)
+		{
+			
+			if((i>10) && ((buf[0]==0x7e) && ((buf[1]&0xa0)==0xa0) && (buf[i-1]==0x7e)))
+			{
+				j=buf[1]&0x7;
+				j<<=8;
+				j+=buf[2];
+				if((j+2)<=(i))   //判断接收的长度
+				{
+					break;
+				}
+			}
 			if(p_serial->rx_len==p_serial->rx_pos)
 				udelay(30);
 		}
@@ -482,7 +523,7 @@ void UART1_HANDLER(void)
 	if(status&2)
 	{	
 		//UART1->STA |= 2;
-		udelay(1);
+		//udelay(1);
 		m_sserial1.send_len=0;
 		SET_UART1_RTS0;
 	}

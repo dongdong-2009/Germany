@@ -39,6 +39,7 @@ void TC0_HANDLER(void)    //系统主节拍.1ms
 	//	if(gprs_ms==0)
 		//	DMA->C0CTRL |= 1;
 	}
+	Para.p_count++;
 	//HDLC_FAST_Rep();
 #if 0	
 	if(sml_tx_rx_time)

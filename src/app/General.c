@@ -204,6 +204,37 @@ void _BCD2TO5ADD(unsigned char *dest,unsigned char *Ptr)
 	
 }
 
+void _BCD6INC(unsigned char *dest) 
+{
+	unsigned long data1;
+	unsigned short Buff_data;
+	
+	data1 = (long)BCD2_Word(dest) + 1;
+	Buff_data=0;
+	if(data1 > 9999)
+  {	
+		Buff_data = data1 / 10000;
+    data1 -= 10000;         	
+	}
+	Word_BCD(dest,(unsigned short)data1);
+	
+	data1 = (long)BCD2_Word(dest+2)+Buff_data;
+	Buff_data=0;
+	if(data1 > 9999)
+  {	
+		Buff_data = data1 / 10000;
+    data1 -= 10000;         	
+	}
+	Word_BCD(dest+2,(unsigned short)data1);
+	
+	data1 = (long)BCD2_Word(dest+4)+Buff_data;
+	if(data1 > 9999)
+	{
+		data1=0;
+	}
+	Word_BCD(dest+4,(unsigned short)data1);
+}
+
 //**********************************************************************
 // BCD1 ADD 1 to BCD1 data
 //**********************************************************************

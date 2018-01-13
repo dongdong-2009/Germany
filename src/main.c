@@ -582,6 +582,7 @@ int  main ( void )
 	//Serial_Open(1,600,7,SERIAL_CHECK_EVEN);
 	Serial_Open(1,9600,8,SERIAL_CHECK_NO);
 	Read_CPU_CRC(SM.CPUCRC);
+	Para.p_plus = 0xffffffff;
 	while(1)
 	{
 		fnWDT_Restart();
@@ -600,7 +601,20 @@ int  main ( void )
 	//	if (Flag.Clk & F_Hour) ProcHour();
 	//	if (Flag.Clk & F_Day) ProcDay();
 		CM_HDLC_Receive();
+		
 		iec1107_read();
+		if(Para.p_count>=Para.p_plus)
+		{
+			Para.p_count=0;
+			if(Para.StatusWord & (1<<11))
+			{
+					_BCD6INC(Para.Pn0);
+				}
+				else
+				{
+					_BCD6INC(Para.Pp0);
+				}
+		}
 	}
 }
 
