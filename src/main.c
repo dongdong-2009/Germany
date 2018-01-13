@@ -597,6 +597,7 @@ int  main ( void )
 	Read_CPU_CRC(SM.CPUCRC);
 	Para.p_plus = 0xffffffff;
 	CommRest(1);
+	InitPara();
 	//SM.ECLedModeCnt = 0x22;
 	while(1)
 	{

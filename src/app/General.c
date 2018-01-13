@@ -638,7 +638,13 @@ void InitMeasPara(void)
 //void RpaInit(void)
 #if 1
 void InitPara(void)			//V2
-{						
+{
+	unsigned char Buff[14];
+	unsigned char* Point;
+	
+	Point = Buff;
+	E2P_RData( Point,E2P_DisDataSetFlag, 1 );
+	SM.ECLedModeCnt=*Point;
 }
 #endif
 unsigned char GetNo(unsigned char* Point, unsigned char* Source, short ItemNums)
