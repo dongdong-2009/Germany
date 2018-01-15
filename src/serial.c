@@ -179,7 +179,7 @@ void DMA_HANDLER(void)
 		{
 			while((UART1->STA & 0x300)!=0x100) __NOP(); 
 			//while((UART1->STA&02)==0) __NOP();
-			UART0->STA  |=0x02;
+			UART1->STA  |=0x02;
 			UART1->CTRL |=0x02;
 		}
 #if 0		

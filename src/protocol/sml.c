@@ -599,6 +599,7 @@ void AnalyseSML(uint8_t *sendbuf)
 void	SMLCommInit(void)
 {
 	int i;
+	SMLComm.SendPtr=0;
   SMLComm.LayerNumR=0;//初始化接收的数据长度,层数,解析的层数等//
   SMLComm.RecLg=0;
   SMLComm.RecLgA=0;
@@ -2267,7 +2268,7 @@ uint8_t DoProSOBIS(uint8_t OBISNo)
 		Len=TextLen;
 	}
 	
-	if((TextLen!=Len) && (Len!=255))
+	if((TextLen!=Len) && (Len!=0))
 		return ReturnERR14;
 	if(TextLen<Len)
 	{
@@ -2296,7 +2297,7 @@ uint8_t DoProSOBIS(uint8_t OBISNo)
       return(ReturnERR03);
       
     }
-  }else if((SMLComm.RecBuf[TempAdd] != OBISType) && (Len!=255) &&  ((PERMIT&State)!=PERMIT))
+  }else if((SMLComm.RecBuf[TempAdd] != OBISType) && (Len!=0) &&  ((PERMIT&State)!=PERMIT))
   {	
     if((SMLComm.RecBuf[TempAdd]  <= 9) && (OBISType == 0x0A))
     {

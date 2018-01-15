@@ -171,6 +171,119 @@ uint8_t SetMKey(uint16_t Flag)
 }
 uint16_t Get_LMN_Cert_Len(uint8_t *recvbuf,uint16_t ret);
 
+uint8_t SetLMN_Cert(unsigned char *input,unsigned char *output)
+{
+	uint8_t *b_lmn_cert;
+	uint8_t *keytext;
+	unsigned short TextLen;
+	int rd_len;
+	if(input)
+	{
+		if(GetTlsTime())
+		{
+			--input;
+			if(input[0]&0x80)
+			{
+				TextLen=(input[0]&0xf)<<4;
+				TextLen=TextLen|(input[1]&0xf);
+				if(input[1]&0x80)
+				{
+					TextLen = (TextLen<<4)+(input[2]&0xf);
+					TextLen -=1;
+					input += 1;
+				}
+				TextLen-=2;
+				input += 2;
+				if(TextLen>500)
+					TextLen=500;
+				E2P_WData(E2P_LMN_Certi,input,TextLen);
+				b_lmn_cert=Get_LMN_Cert();
+				memcpy(b_lmn_cert,input,TextLen);
+				rd_len=(b_lmn_cert[2]<<8)|b_lmn_cert[3];
+				keytext=Cm_Get_ECC_Addr();
+				memcpy(keytext,input+rd_len+11,32); 
+				E2P_WData( E2P_PrivateKey,keytext,32);
+				Cm_Make_Public_Key();
+				return ReturnOK;
+			}
+		}
+		return ReturnERR14;
+	}
+	return ReturnOK;
+}
+
+uint8_t GetSMGW_Cert(unsigned char *input,unsigned char *output)
+{
+	uint8_t *b_lmn_cert;
+	unsigned short TextLen;
+	int rd_len;
+	if(input)
+	{
+		if(GetTlsTime())
+		{
+			--input;
+			if(input[0]&0x80)
+			{
+				TextLen=(input[0]&0xf)<<4;
+				TextLen=TextLen|(input[1]&0xf);
+				if(input[1]&0x80)
+				{
+					TextLen = (TextLen<<4)+(input[2]&0xf);
+					TextLen -=1;
+					input += 1;
+				}
+				TextLen-=2;
+				input += 2;
+				if(TextLen>500)
+					TextLen=500;
+				E2P_WData(E2P_SMGW_Certi,input,TextLen);
+				b_lmn_cert=Get_SMGW_Cert();
+				memcpy(b_lmn_cert,input,TextLen);
+				return ReturnOK;
+			}
+		}
+		return ReturnERR14;
+	}
+	if(!output)
+	{
+		return ReturnERR03;
+	}
+	b_lmn_cert=Get_SMGW_Cert();
+	SMLComm.SendPtr-=2;
+	if(b_lmn_cert[2]==0)
+	{
+			SMLComm.SendBuf[++SMLComm.SendPtr]=0x01;
+	}
+	else
+	//if(b_lmn_cert[2])
+	{
+			rd_len=(b_lmn_cert[2]<<8)|b_lmn_cert[3];
+			if(rd_len>500)
+			{
+				rd_len=Get_LMN_Cert_Len(b_lmn_cert+4,rd_len);
+			}
+			
+			if(rd_len<15)
+			{
+				SMLComm.SendBuf[SMLComm.SendPtr++]=rd_len;
+			}
+			else if(rd_len<253)
+			{
+				SMLComm.SendBuf[SMLComm.SendPtr++]=0x80|(((rd_len+2+4)>>4)&0xf);
+				SMLComm.SendBuf[SMLComm.SendPtr++]=((rd_len+2+4)&0xf);
+			}
+			else
+			{
+				SMLComm.SendBuf[SMLComm.SendPtr++]=0x80|(((rd_len+3+4)>>8)&0xf);
+				SMLComm.SendBuf[SMLComm.SendPtr++]=0x80|(((rd_len+3+4)>>4)&0xf);
+				SMLComm.SendBuf[SMLComm.SendPtr++]=((rd_len+3+4)&0xf);
+			}
+			memcpy(&SMLComm.SendBuf[SMLComm.SendPtr],b_lmn_cert,rd_len+4);
+			SMLComm.SendPtr+=rd_len+4;
+		}
+		return ReturnOK;
+}
+
 uint8_t Get_PublicKey(uint16_t Flag)
 {
 	int rd_ptr,rd_len;
