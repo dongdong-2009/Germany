@@ -19,7 +19,7 @@ uint8_t Kenc[16],Kmac[16],Lenc[16],Lmac[16];
 //static uint8_t b_lmn_cert[512];
 //static uint8_t b_gw_cert[256];
 uint8_t b_lmn_cert[512];
-uint8_t b_gw_cert[256];
+uint8_t b_gw_cert[512];
 uint8_t *Get_LMN_Cert(void)
 {
 	return b_lmn_cert;

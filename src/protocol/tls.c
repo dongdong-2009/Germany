@@ -765,7 +765,7 @@ int tls_Init(void)
 //		Cm_Make_Public_Key();
 		E2P_RData(b_lmn_cert,E2P_LMN_Certi,511);
 		b_lmn_cert=Get_SMGW_Cert();
-		E2P_RData(b_lmn_cert,E2P_SMGW_Certi,255);
+		E2P_RData(b_lmn_cert,E2P_SMGW_Certi,500);
 		
 #endif		
 		fnWDT_Restart();

@@ -8,7 +8,7 @@
 #define IEC1107_WRITE(buf,len) (Serial_Write(1,buf,len))
 #define IEC1107_STATUS				Serial_Status(1)
 uint8_t iec1107_buf[256];
-uint8_t iec1107_sendbuf[64];
+uint8_t iec1107_sendbuf[8];
 uint8_t iec1107_buf_pos;
 struct iec1107_s
 {
@@ -20,7 +20,7 @@ struct iec1107_s
 uint8_t ieccmd_ptr;
 extern uint8_t firmware_version[];
 #define IEC1107_TABLE_NUM    28
-struct iec1107_s iec1107_table[IEC1107_TABLE_NUM]=
+const struct iec1107_s iec1107_table[IEC1107_TABLE_NUM]=
 {
 	"1-0:96.1.0*255",(uint32_t)&Para.servrid,10,16,
 	"1-0:1.8.0*255",(uint32_t)&Para.Pp0[0],16,5,
@@ -133,7 +133,6 @@ void iec1107_read(void)
 {
 	uint16_t len,pos,i,j,p;
 	uint64_t tmp;
-	uint32_t LongData;
 	
 	if(iec1107_buf_pos>250)
 		iec1107_buf_pos=0;
@@ -190,16 +189,6 @@ void iec1107_read(void)
 						}
 					}
 					Para.meter_sts |=0x4;
-					LongData = BCD4_Long( Para.Pt);	//¹¦ÂÊÌõ
-					Para.pval = LongData/10;
-					if(LongData>30)
-					{
-						Para.p_plus = 3600000/LongData;
-					}
-					else
-					{
-						Para.p_plus = 0xffffffff;
-					}
 				}
 		//		memset(iec1107_buf,0,128);
 				Comm.BTime2=20;

@@ -75,7 +75,20 @@ void ProcSec(void)
 	int i;
 	uint64_t m_me;
 	uint8_t *m_malloc_buf;
+	uint8_t tmp_data[4];
 	Flag.Clk &= ~F_Sec;
+	memcpy(tmp_data,Para.Pt,4);
+	tmp_data[2] &=0x7f;
+	m_me=BCD4_Long(tmp_data);
+	//Para.pval = m_me;
+	if(m_me>30)
+	{
+		Para.p_plus = 360000/m_me;
+	}
+	else
+	{
+		Para.p_plus = 0xffffffff;
+	}
 //	serial_test();
 #if 0	
 	E2P_RData(&m_me,CMon_EC_Pp0,8);
@@ -628,7 +641,7 @@ int  main ( void )
 		if(Para.p_count>=Para.p_plus)
 		{
 			Para.p_count=0;
-			if(Para.StatusWord & (1<<11))
+			if(Para.Pt[2]&0x80)
 			{
 					_BCD6INC(Para.Pn0);
 				}

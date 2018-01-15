@@ -250,7 +250,7 @@ uint8_t GetSMGW_Cert(unsigned char *input,unsigned char *output)
 	}
 	b_lmn_cert=Get_SMGW_Cert();
 	SMLComm.SendPtr-=2;
-	if(b_lmn_cert[2]==0)
+	if(b_lmn_cert[2]==0 && b_lmn_cert[3]==0)
 	{
 			SMLComm.SendBuf[++SMLComm.SendPtr]=0x01;
 	}
