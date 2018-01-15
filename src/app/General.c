@@ -617,13 +617,7 @@ void OperationalTimeInc(void)
 
 void RpaInit(void)			//V2
 {
-//	SetConstPara();
-	//InitPara();
-#if ( Threephase == YesCheck ) //三相
-#if( MEASCHIP == RN8207 )	
-	InitMeasPara();
-#endif
-#endif		
+	InitPara();	
 }	
 
 #if ( Threephase == YesCheck ) //三相
@@ -639,12 +633,22 @@ void InitMeasPara(void)
 #if 1
 void InitPara(void)			//V2
 {
-	unsigned char Buff[14];
+	unsigned char Buff[4];
 	unsigned char* Point;
 	
 	Point = Buff;
 	E2P_RData( Point,E2P_DisDataSetFlag, 1 );
+	if((SM.ECLedModeCnt!=*Point) && (*Point==0x22))
+	{
+		Comm.FTime1=3;
+	}
+	/*
+	if((SM.ECLedModeCnt!=*Point) && (*Point!=0x22))
+	{
+		Comm.BTime2=256;
+	}*/
 	SM.ECLedModeCnt=*Point;
+	
 }
 #endif
 unsigned char GetNo(unsigned char* Point, unsigned char* Source, short ItemNums)

@@ -171,6 +171,7 @@ const CDPARATAB CDParaTab[] =
 	'C','0','8','8','3',16,E2P_Default_Mkey,READ+WRITE+0x83,
 	'C','0','8','8','4',32,E2P_Default_PKey,READ+WRITE+0x80,
 	'C','0','8','8','0',10,User_ID,WRITE+0x23,	//identification of user
+	'I','N','F','O','R',1,E2P_DisDataSetFlag,READ+WRITE+0x80,
 };
 
 #define	READ	0x8000

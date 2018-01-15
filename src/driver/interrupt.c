@@ -688,24 +688,18 @@ extern uint8_t ieccmd_ptr;
 				ieccmd_ptr=0;
 			}
 		}
-		if( Comm.BTime1 != 0 ) 
-			{
-			       Comm.BTime1--;
-			}
-		
+
 			if( Comm.Delay1 != 0 ) 
 			{
 			       Comm.Delay1--;
 			}
-			if( Comm.TXLAST_Delay1 != 0 ) 
-			{
-	       			Comm.TXLAST_Delay1--;
-			}
+/*
 			if( Comm.TX_Delay1 != 0 ) 
 			{
 			       Comm.TX_Delay1--;
 			       if( Comm.TX_Delay1 == 0 )	 CommInit(1);
 			}
+			*/
 	}
 	RTC->IF = 0xff;
 }

@@ -101,12 +101,12 @@ void ProcSec(void)
 	Comm.SecPulseCnt++;
 	sec++;
 	Judge_Cryto();
-	if(SM.ECLedModeCnt==0x22)
+	//if(SM.ECLedModeCnt==0x22)
 	{
 			if( Comm.FTime1 != 0 )
 			{
 				Comm.FTime1--;
-				if( Comm.FTime1 == 0 ) CommRest(1);			
+				if( Comm.FTime1 == 0 && SM.ECLedModeCnt==0x22) CommRest(1);			
 			}
 			if(Flag.Run1 & F_ComRest)	
 			{
@@ -617,7 +617,7 @@ int  main ( void )
 	//	if (Flag.Clk & F_Hour) ProcHour();
 	//	if (Flag.Clk & F_Day) ProcDay();
 		CM_HDLC_Receive();
-		if(SM.ECLedModeCnt==0x22)
+		if(SM.ECLedModeCnt==0x22 || Comm.FTime1)
 		{
 			CommMode(1);
 		}

@@ -97,11 +97,8 @@ void CommInit(unsigned char COM_No)
 {
 	switch( COM_No )
 	{
-		case 0:
-			
-			break;
 		case 1:
-			if( Comm.TX_Delay1 == 0 ) 
+			if( Comm.Delay1 == 0 ) 
 			{	
 				Comm.Mode1 = 1;
 				Comm.Ptr1 = 0;
@@ -186,8 +183,8 @@ void CommMode(unsigned char COM_No)
 		if(rclen)
 		{
 			*CommPara[COM_No].Ptr +=rclen;
-			Comm.BTime1 = MS600;
-			Comm.Delay1 = MS400;
+		//	Comm.BTime1 = MS600;
+			Comm.Delay1 = 20;
 			switch (CommPara[COM_No].Buf[0])
 			{
 			case NAK: 	
@@ -222,6 +219,7 @@ void CommMode(unsigned char COM_No)
 		}	
 		Flag.Run1 |= F_ComOK;
 		(*ComMode)=1;
+		Comm.BTime2=64;
 	}
 	switch( *ComMode )
 	{
@@ -249,8 +247,8 @@ void CommMode(unsigned char COM_No)
 				{
 					if(*ComBlockNo && (Comm.Delay1==0))
 					{
-						Comm.TX_Delay1 = MS400+5;
-						Comm.Delay1 = MS400-5;
+						//Comm.TX_Delay1 = MS400+5;
+						Comm.Delay1 = MS400;
 						SendNextBlock(COM_No);
 						Comm.FTime1=2;
 					}
@@ -1455,7 +1453,6 @@ short CommModeRec(unsigned char COM_No)
 					*ComSendLen=0x1;
 					*ComBuf = STX;
 					*ComBcc=0x0;
-			//		SendErrorCode();
 					break;
 				case '1':
 					Buff[0]=Clk.Sec_64;
@@ -1466,8 +1463,6 @@ short CommModeRec(unsigned char COM_No)
 					*(ComBuf+2) = 0x30;
 					*(ComBuf+3) = 0x2;
 					*(ComBuf+4) = 0x28;
-				//	Comm.Buf[5] = 0x28;
-				//	Comm.Buf[6] = 0x28;
 					*(ComBuf+9) = 0x29;
 					*(ComBuf+10) = 0x3;
 					GetXorCheck( &XorCheck, &CheckAds,ComBuf);
@@ -1492,7 +1487,6 @@ short CommModeRec(unsigned char COM_No)
 				}	
 				if( *ComBuf == NAK ) 
 				{
-					//Comm.Buf[0] = SOH;
 					*ComBuf = STX;
 					break;	
 				}
@@ -2067,6 +2061,7 @@ short Proc_Write(unsigned char COM_No)
 					        RpaInit();
 									if((CDParaTab[i].ComID1 == 'C') && (CDParaTab[i].ComID4 == '8')&&(CDParaTab[i].ComID5 == '4'))
 										Write_PublicKey();
+									break;
 				}				
 			}	
 			else if((CDParaTab[i].State & 0x0020)!=0)   //0x002X
