@@ -1,0 +1,22 @@
+extern void KeyChuli(void);
+extern void chulilongsetkey(void);
+extern void chulishortsetkey(void);
+extern void Manu_set_Clk(void);
+extern void Manu_set_Eob(void);
+extern void Manu_browse_history(void);
+extern void ProcessUpScroll(void);
+extern void ProcessDownScroll(void);
+extern unsigned char PanSetClk(void);
+extern void ProcessAddJsr(void);
+extern void ProcessAddClk(void);
+extern void ProcessAddTariff(void);
+extern void ProcessSubTariff(void);
+extern void ProcessSubClk(void);
+extern void ProcessSubJsr(void);
+unsigned char BCD_Sub1(unsigned char BCDdata);
+unsigned char BCD_Add1(unsigned char BCDdata);
+void ProcessAddClr(void);
+void ProcessDisHis(void);
+void RecordSetJsr(void);
+void RecordSetSdName(void);
+

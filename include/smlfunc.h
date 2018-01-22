@@ -1,0 +1,61 @@
+#ifndef __SMLFUNC_H__
+#define __SMLFUNC_H__
+#include <stdint.h>
+uint8_t GetEC_Pp0(unsigned char *input,unsigned char *output);
+uint8_t GetEC_Pn0(unsigned char *input,unsigned char *output);
+uint8_t GetU_L1(unsigned char *input,unsigned char *output);
+uint8_t GetU_L2(unsigned char *input,unsigned char *output);
+uint8_t GetU_L3(unsigned char *input,unsigned char *output);
+uint8_t GetS(unsigned char *input,unsigned char *output);
+uint8_t GetU_back(uint16_t Flag);
+uint8_t GetS_back(uint16_t Flag);
+uint8_t Judge_P(unsigned char *input,unsigned char *output);
+uint8_t Judge_N(unsigned char *input,unsigned char *output);
+uint8_t GetP_Signature(uint16_t Flag);
+uint8_t GetN_Signature(uint16_t Flag);
+uint8_t Judge_ResteCry(unsigned char *input,unsigned char *output);
+uint8_t Get_Certificate(uint16_t Flag);
+uint8_t SetMKey(uint16_t Flag);
+uint8_t SetPrivateKey(uint16_t Flag);
+uint8_t GetP_back(uint16_t Flag);
+uint8_t GetI_back(uint16_t Flag);
+uint8_t Judge_PINCODE(unsigned char *input,unsigned char *output);
+uint8_t ReSetDay(uint16_t Flag);
+uint8_t ReSetLast(uint16_t Flag);
+uint8_t Judge_Day(unsigned char *input,unsigned char *output);
+uint8_t Judge_Week(unsigned char *input,unsigned char *output);
+uint8_t Judge_Month(unsigned char *input,unsigned char *output);
+uint8_t Judge_Year(unsigned char *input,unsigned char *output);
+uint8_t Judge_MaxLen(unsigned char *input,unsigned char *output);
+uint8_t Get_PublicKey(uint16_t Flag);
+uint8_t GetAngle_back(uint16_t Flag);
+uint8_t GetAngle1(unsigned char *input,unsigned char *output);
+uint8_t GetAngle2(unsigned char *input,unsigned char *output);
+uint8_t GetAngle3(unsigned char *input,unsigned char *output);
+uint8_t GetAngle4(unsigned char *input,unsigned char *output);
+uint8_t GetAngle5(unsigned char *input,unsigned char *output);
+uint8_t GetIa(unsigned char *input,unsigned char *output);
+uint8_t GetIb(unsigned char *input,unsigned char *output);
+uint8_t GetIc(unsigned char *input,unsigned char *output);
+uint8_t GetI_back(uint16_t Flag);
+uint8_t GetLastPn(unsigned char *input,unsigned char *output);
+
+uint8_t Get_P_Sig_val(unsigned char *input,unsigned char *output);
+uint8_t Get_P_Sig_sts(unsigned char *output);
+uint8_t Get_P_Sig_time(unsigned char *output);
+uint8_t Get_P_Signature(unsigned char *output);
+uint8_t Get_N_Sig_val(unsigned char *input,unsigned char *output);
+uint8_t Get_N_Sig_sts(unsigned char *output);
+uint8_t Get_N_Sig_time(unsigned char *output);
+uint8_t Get_N_Signature(unsigned char *output);
+uint8_t GetFre(unsigned char *input,unsigned char *output);
+uint8_t GetSa(unsigned char *input,unsigned char *output);
+uint8_t GetSb(unsigned char *input,unsigned char *output);
+uint8_t GetSc(unsigned char *input,unsigned char *output);
+uint8_t GetFre(unsigned char *input,unsigned char *output);
+uint8_t SetManFlag(uint16_t Flag);
+uint8_t SetCoverFlag(uint16_t Flag);
+uint8_t Get_Certificate1(unsigned char *input,unsigned char *output);
+uint8_t SetLMN_Cert(unsigned char *input,unsigned char *output);
+uint8_t GetSMGW_Cert(unsigned char *input,unsigned char *output);
+#endif

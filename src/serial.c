@@ -166,6 +166,7 @@ void DMA_Send(uint8_t ch,uint8_t  *dstbuf,uint8_t *srcbuf,uint16_t len)
 void DMA_HANDLER(void)
 {
 	uint16_t sts;
+	u32  status;
 	sts = DMA->STA;
 	if((sts & 0x110)==0x110)
 	{
@@ -178,9 +179,11 @@ void DMA_HANDLER(void)
 		else
 		{
 			while((UART1->STA & 0x300)!=0x100) __NOP(); 
-			//while((UART1->STA&02)==0) __NOP();
-			UART1->STA  |=0x02;
-			UART1->CTRL |=0x02;
+			while((UART1->STA&02)==0) __NOP();
+		//	status = UART1->STA;
+		//	UART1->STA  = status;
+			UART1->CTRL |=0x0e;
+		//	UART1->CTRL |=0x02;
 		}
 #if 0		
 		udelay(2);
@@ -234,7 +237,7 @@ int8_t Serial_Open(uint8_t ch,uint32_t baud,uint8_t bits,uint8_t check)
 		UART1->CTRL = ClkDiv;
 	//	UART0->CTRL |=0x02;		//允许发送中断
 		UART1->CTRL |=0x0c; 	//允许接收中断,允许接收错误中断
-		UART1->STA = 0x02;		//清发送中断标志
+		UART1->STA = 0x0e;		//清发送中断标志
 	//	Init_RTS1();
 		SET_UART1_RTS0;
 		p_serial->serial_rx_buf = ch0_rx_buf;
@@ -287,7 +290,8 @@ int16_t Serial_Write(uint8_t ch,uint8_t *buf,uint16_t len)
 	//udelay(100); //ok
 	if(ch==0)
 	{
-		UART1->CTRL &=~(0x02);
+		//UART1->CTRL &=~(0x02);
+		UART1->CTRL &=~(0x0e);
 		DMA_Send(0,(uint8_t *)&(UART1->TXD),buf, len);
 		buf_pos = buf;
 		m_sserial1.pre_len=0;	
@@ -450,12 +454,14 @@ void  HDLC_FAST_Rep(void)
 }
 void UART1_HANDLER(void)
 {
-	u32  status;
+	u32  status,i;
 	status = UART1->STA;
 //	UART1->STA &= 0x3d;
-	UART1->STA = UART1->STA;
-#pragma GCC push_options
-#pragma GCC optimize ("O3")	
+	UART1->STA = status;//UART1->STA;
+//#pragma GCC push_options
+//#pragma GCC optimize ("O3")	
+#pragma push	
+#pragma O3	
 	if(status&1)
 //	while(UART0->STA&1)
 	{
@@ -533,10 +539,14 @@ void UART1_HANDLER(void)
 	{	
 		//UART1->STA |= 2;
 		//udelay(1);
-		m_sserial1.send_len=0;
+		for(i=0;i<5;++i);
 		SET_UART1_RTS0;
+		m_sserial1.send_len=0;
+		UART1->STA |= 2;
+		UART1->CTRL &=(~0x02);
 	}
-#pragma GCC pop_options
+#pragma pop	
+//#pragma GCC pop_options
 	return;
 }
 

@@ -81,7 +81,8 @@ void Set_Lmn_Dev_Id(uint8_t *buf)
 	{
 		m_lmn_info.b_sub_identification[9-i]=(tmp_val>>(i*8))&0xff;
 	}
-	E2P_WData( Server_ID,m_lmn_info.b_sub_identification, 10 );
+	//E2P_WData( Server_ID,m_lmn_info.b_sub_identification, 10 );
+	E2P_WData(Server_BABID,m_lmn_info.b_sub_identification, 10 );
 }
 void InitServerId(void)
 {
@@ -100,7 +101,9 @@ void InitServerId(void)
 	hdlc_back=tls_back_fun;
 #endif
 	//i_rx_len=120;
-	E2P_RData(m_lmn_info.b_sub_identification,Server_ID,10);
+	E2P_RData(m_lmn_info.b_sub_identification,Server_BABID,10);
+	E2P_WData(Server_ID,m_lmn_info.b_sub_identification, 10 );
+	//E2P_RData(m_lmn_info.b_sub_identification,Server_ID,10);
 	if(m_lmn_info.b_sub_identification[0]==0)
 	{
 	m_lmn_info.b_sub_identification[0]=0x0A;
@@ -132,6 +135,8 @@ void InitServerId(void)
 #else
 	memcpy(m_lmn_info.b_sub_identification+2,Manufacture,3);
 	memcpy(m_lmn_info.b_sub_identification+7,"STC",3);
+	E2P_WData(Server_ID,m_lmn_info.b_sub_identification, 10 );
+	E2P_WData(Server_BABID,m_lmn_info.b_sub_identification, 10 );
 }
 	memcpy(m_lmn_info.b_sensor_identification,m_lmn_info.b_sub_identification,10);
 //	memset(m_lmn_info.b_sensor_identification,0xff,10);
@@ -151,10 +156,10 @@ void InitServerId(void)
 		i_rx_len+=b_Hdlc_sendbuf[i_send_len];
 	}
 #endif	
-	i_rx_len=DoCrc16(0xffff,b_Hdlc_sendbuf,6);
+	//i_rx_len=DoCrc16(0xffff,b_Hdlc_sendbuf,6);
 	//gprs_ms+=1;
 //	E2P_WData(E2P_FirmWareCheck,(unsigned char*)&i_rx_len,2);
-	E2P_WData(E2P_FirmWareCheck,b_Hdlc_sendbuf,2);
+//	E2P_WData(E2P_FirmWareCheck,b_Hdlc_sendbuf,2);
 	i_rx_len=3;
 	E2P_WData(E2P_Director,(unsigned char*)&i_rx_len,1);
 	i_rx_len=0;
@@ -682,8 +687,8 @@ void CM_HDLC_Receive(void)
 			Close_tls();
 			ms_count=0;
 		}
-		if((ms_count&0xfffffff0) && i_rx_len)
-			i_rx_len=0;
+	//	if((ms_count&0xfffffff0) && i_rx_len)
+	//		i_rx_len=0;
 		return;
 	}
 	#endif
