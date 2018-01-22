@@ -166,7 +166,7 @@ const CDPARATAB CDParaTab[] =
 	'C','0','0','0','C',4,0x0000,READ+0x40,	//read out crc
 	'0','.','2','.','0',11,0x0000,READ+0x28,	//read version
 	'F','.','F','.','1',4,0x0000,READ+0x43,	
-	'C','0','8','8','1',10,Server_ID,READ+0x85,	//identification of user
+	'C','0','8','8','1',10,Server_BABID,READ+0x85,	//identification of user
 	'C','0','8','8','2',16,E2P_SymmetricalKey,READ+WRITE+0x83,
 	'C','0','8','8','3',16,E2P_Default_Mkey,READ+WRITE+0x83,
 	'C','0','8','8','4',32,E2P_Default_PKey,READ+WRITE+0x80,
@@ -241,7 +241,7 @@ const uint8_t DeviceClass[8]={0x81,0x81,0xc7,0x82,0x60,0xff};
 const uint8_t Manufacture[4]={"LOG"};
 //const uint8_t firmware_version[]="STC868IRANDR01VS1";
 uint8_t firmware_version[]="180118";
-const uint8_t firmware_version1[]="01";
+const uint8_t firmware_version1[2]="01";
 uint8_t Z1_M[16];
 const SMLOBISTAB	SMLOBISTab[]=
 {

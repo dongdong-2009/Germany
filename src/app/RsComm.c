@@ -1677,6 +1677,7 @@ short Proc_Execute(unsigned char COM_No)
 	return 0;	
 }
 //---------------------------------
+extern const uint8_t firmware_version1[];
 short Proc_Read(unsigned char COM_No)
 {
 	unsigned char Buff[60];
@@ -1884,7 +1885,7 @@ short Proc_Read(unsigned char COM_No)
 							{
 								*(ComBuf+i)=VerTab[i-1];
 							}
-							memcpy(ComBuf+8,firmware_version,2);
+							memcpy(ComBuf+8,firmware_version1,2);
 							i = 18;	
 							break;				
 						default:  	
