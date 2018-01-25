@@ -684,8 +684,8 @@ void RTC_HANDLER(void)
 			Comm.BTime2--;
 			if(Comm.BTime2==0)
 			{
-extern uint8_t ieccmd_ptr;				
-				ieccmd_ptr=0;
+//extern uint8_t ieccmd_ptr;				
+//				ieccmd_ptr=0;
 			}
 		}
 

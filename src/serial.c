@@ -135,7 +135,7 @@ void DMA_SetLen(uint8_t ch,uint16_t Len)
 			DMA->C1CTRL |= (((Len>>2))<<24) | ((3)<<16);
 		}
 		else
-			DMA->C1CTRL |= ((Len-1)<<16);
+			DMA->C1CTRL |= ((Len)<<16);
 		m_sserial5.send_len=Len;
 	}
 }
@@ -198,8 +198,8 @@ void DMA_HANDLER(void)
 		DMA->C1CTRL &= ~1;
 		DMA->STA &=0x220;
 		while((UART5->STA & 0x300)!=0x100) __NOP(); 
-		//while((UART5->STA&02)==0) __NOP();
-		UART5->STA  |=0x02;
+		while((UART5->STA&02)==0) __NOP();
+	//	UART5->STA  |=0x02;
 		UART5->CTRL |=0x02;
 #if 0			
 		//udelay(100);
@@ -539,7 +539,7 @@ void UART1_HANDLER(void)
 	{	
 		//UART1->STA |= 2;
 		//udelay(1);
-		for(i=0;i<5;++i);
+		for(i=0;i<10;++i);
 		SET_UART1_RTS0;
 		m_sserial1.send_len=0;
 		UART1->STA |= 2;

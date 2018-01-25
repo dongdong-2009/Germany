@@ -17,7 +17,8 @@ struct iec1107_s
 	uint8_t deci;
 	uint8_t Len;
 };
-uint8_t ieccmd_ptr;
+static uint8_t ieccmd_ptr;
+static uint8_t meter_retry;
 extern uint8_t firmware_version[];
 #define IEC1107_TABLE_NUM    28
 const struct iec1107_s iec1107_table[IEC1107_TABLE_NUM]=
@@ -48,7 +49,8 @@ const struct iec1107_s iec1107_table[IEC1107_TABLE_NUM]=
 	"1-0:1.8.00*63",(uint32_t)&Para.P0_year,10,3,
 	"1-0:1.8.00*65",(uint32_t)&Para.P0_last,10,3,	
 	"1-0:1.8.00*65",(uint32_t)firmware_version,10,7,	
-	"1-0:1.8.00*65",(uint32_t)SM.CPUCRC_M,10,2,	
+	//"1-0:1.8.00*65",(uint32_t)SM.CPUCRC_M,10,2,	
+	"1-0:1.8.00*65",0,10,2,
 	"1-0:97.97.0*255",(uint32_t)&Para.meter_sts,16,4,
 };
 uint64_t strtoint(uint8_t *buf,uint8_t len,uint8_t deci)
@@ -91,7 +93,7 @@ void iec1107_write(void)
 		  iec1107_sendbuf[3]=0x0d;
 		  iec1107_sendbuf[4]=0x0a;
 			IEC1107_WRITE(iec1107_sendbuf,5);
-			ieccmd_ptr++;
+			ieccmd_ptr=1;
 			Comm.BTime2=50;
 			iec_flag=0;
 			break;
@@ -174,6 +176,8 @@ void iec1107_read(void)
 						}
 						else if(p==25)
 						{
+							SM.CPUCRC_M[0]=iec1107_buf[i+1];
+							SM.CPUCRC_M[1]=iec1107_buf[i+2];
 							((unsigned char *)iec1107_table[p].ramaddr)[0]=(iec1107_buf[i+4]>>4)+0x30;
 							((unsigned char *)iec1107_table[p].ramaddr)[1]=(iec1107_buf[i+4]&0xf)+0x30;
 							((unsigned char *)iec1107_table[p].ramaddr)[2]=(iec1107_buf[i+5]>>4)+0x30;
@@ -184,15 +188,30 @@ void iec1107_read(void)
 						}
 						else
 						{
+							if(iec1107_table[p].ramaddr==0)
+								continue;
 							memcpy((unsigned char *)iec1107_table[p].ramaddr,iec1107_buf+i,iec1107_table[p].Len);
 							Cm_Ram_Inter((unsigned char *)iec1107_table[p].ramaddr,iec1107_table[p].Len);
 						}
+					}
+					if((SM.CPUCRC_M[0]==0x1c) && (SM.CPUCRC_M[1]==0x19))
+					{
+						Para.Ia[2]=Para.Ia[1];
+						Para.Ia[1]=Para.Ia[0];
+						Para.Ia[0]=0;
+						Para.Ib[2]=Para.Ic[1];
+						Para.Ib[1]=Para.Ic[0];
+						Para.Ib[0]=0;
+						Para.Ic[2]=Para.Ic[1];
+						Para.Ic[1]=Para.Ic[0];
+						Para.Ic[0]=0;
 					}
 					Para.meter_sts |=0x4;
 				}
 		//		memset(iec1107_buf,0,128);
 				Comm.BTime2=20;
 				ieccmd_ptr=0;
+				meter_retry=0;
 			}
 			else
 			{
@@ -202,10 +221,22 @@ void iec1107_read(void)
 	}
 	else
 	{
-		if((IEC1107_STATUS==0) && (ieccmd_ptr<2) && ((Comm.BTime2==0)))
+		if((IEC1107_STATUS==0) /*&& (ieccmd_ptr<2) */&& ((Comm.BTime2==0)))
 		{
 			iec1107_buf_pos=0;
 			Para.p_count=0;
+			if(ieccmd_ptr)
+			{
+				if(++meter_retry==3)
+				{
+					E2P_RData(m_lmn_info.b_sub_identification,Server_BABID,10);
+					E2P_WData(Server_ID,m_lmn_info.b_sub_identification, 10 );
+					memcpy(m_lmn_info.b_sensor_identification,m_lmn_info.b_sub_identification,10);
+					Para.servrid=0;
+					Para.meter_sts=0;
+				}
+			}
+			ieccmd_ptr=0;
 			iec1107_write();
 		}
 	}

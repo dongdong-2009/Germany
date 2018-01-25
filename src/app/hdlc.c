@@ -150,6 +150,9 @@ void InitServerId(void)
 	//E2P_WData(E2P_Manufactor_ID,"STC0063539421",14);
 	memcpy(b_Hdlc_sendbuf,"1.0.00",6);
 	E2P_WData(E2P_FirmwareVer,b_Hdlc_sendbuf,6);
+b_Hdlc_sendbuf[0]=0xff;
+b_Hdlc_sendbuf[1]=0xe0;
+	E2P_WData(CRCCheck,b_Hdlc_sendbuf,2);
 #if 0	
 	for(i_rx_len=0,i_send_len=0;i_send_len<6;++i_send_len)
 	{
